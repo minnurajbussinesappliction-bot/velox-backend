@@ -2,34 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Velox Driver</title>
-  <!-- Use reliable CDN scripts to prevent 404s -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  
+  <!-- CSS & CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0b0f17; color: #fff; display: flex; justify-content: center; padding: 20px; }
-    .phone { width: 380px; background: #131b26; border-radius: 24px; border: 1px solid #1f293d; overflow: hidden; display: flex; flex-direction: column; min-height: 700px; }
+    html, body { width: 100%; min-height: 100vh; background: #0b0f17; color: #fff; display: flex; justify-content: center; }
+    .phone { width: 100%; max-width: 440px; background: #131b26; min-height: 100vh; display: flex; flex-direction: column; }
     .header { padding: 14px 16px; background: #16202c; border-bottom: 1px solid #1f293d; font-weight: 700; color: #0284c7; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
-    #driverMap { width: 100%; height: 180px; background: #1e293b; }
-    .content { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
-    .card { background: #1c2738; padding: 10px 12px; border-radius: 12px; border: 1px solid #29384f; }
-    .label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-    .stat-box { background: #141c2b; border: 1px solid #29384f; border-radius: 8px; padding: 6px; text-align: center; }
-    .stat-val { font-size: 14px; font-weight: 800; color: #10b981; }
-    .stat-sub { font-size: 9px; color: #94a3b8; text-transform: uppercase; }
-    .payout { font-size: 24px; font-weight: 800; color: #10b981; }
-    .btn { border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; margin-top: 4px; }
+    #driverMap { width: 100%; height: 220px; min-height: 220px; background: #1e293b; z-index: 1; }
+    .content { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .card { background: #1c2738; padding: 12px; border-radius: 12px; border: 1px solid #29384f; }
+    .label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .stat-box { background: #141c2b; border: 1px solid #29384f; border-radius: 8px; padding: 8px; text-align: center; }
+    .stat-val { font-size: 15px; font-weight: 800; color: #10b981; }
+    .stat-sub { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+    .payout { font-size: 26px; font-weight: 800; color: #10b981; }
+    .btn { border: none; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; width: 100%; }
     .btn-green { background: #10b981; color: #041f17; }
     .btn-blue { background: #0284c7; color: #fff; }
     .btn-amber { background: #f59e0b; color: #041f17; }
     .btn-red { background: #ef4444; color: #fff; }
-    input { width: 100%; padding: 10px; background: #070a0f; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 18px; text-align: center; letter-spacing: 4px; font-weight: 700; }
-    .call-btn { background: #0284c7; color: #fff; padding: 6px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; }
-    .timer-bar { width: 100%; height: 4px; background: #334155; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+    input { width: 100%; padding: 12px; background: #070a0f; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 20px; text-align: center; letter-spacing: 6px; font-weight: 700; }
+    .call-btn { background: #0284c7; color: #fff; padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .timer-bar { width: 100%; height: 5px; background: #334155; border-radius: 3px; overflow: hidden; margin-top: 6px; }
     .timer-fill { height: 100%; background: #f59e0b; width: 100%; transition: width 1s linear; }
   </style>
 </head>
@@ -41,7 +43,7 @@
     </div>
 
     <!-- Live Performance Ledger -->
-    <div class="card" style="margin: 8px 12px 0;">
+    <div class="card" style="margin: 10px 14px 0;">
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-val" id="statTrips">0</div>
@@ -58,7 +60,7 @@
       </div>
     </div>
     
-    <div id="driverMap" style="margin-top: 8px;"></div>
+    <div id="driverMap" style="margin-top: 10px;"></div>
 
     <div class="content">
       <button id="goOnlineBtn" class="btn btn-blue" onclick="goOnline()">Go Online</button>
@@ -74,11 +76,11 @@
           <div id="timerFill" class="timer-fill"></div>
         </div>
 
-        <div class="payout" id="payoutText" style="margin-top:6px;">₹69.00</div>
-        <div id="vehicleTag" style="font-size:12px; font-weight:700; color:#38bdf8;">🏍️ Bike</div>
-        <div id="routeDesc" style="font-size:11px; color:#94a3b8; margin: 4px 0;">Pickup: Kazipet ➔ Public Garden</div>
+        <div class="payout" id="payoutText" style="margin-top:8px;">₹69.00</div>
+        <div id="vehicleTag" style="font-size:13px; font-weight:700; color:#38bdf8;">🏍️ Bike</div>
+        <div id="routeDesc" style="font-size:12px; color:#94a3b8; margin: 4px 0;">Pickup: Kazipet ➔ Public Garden</div>
         
-        <div style="display: flex; gap: 6px;">
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
           <button id="acceptBtn" class="btn btn-amber" style="flex:2;" onclick="acceptOrder()">Accept</button>
           <button class="btn btn-red" style="flex:1;" onclick="declineOrder()">Decline</button>
         </div>
@@ -86,28 +88,30 @@
 
       <!-- OTP Entry Card -->
       <div id="otpInputSec" class="card" style="display:none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <div class="label">Enter Rider's 4-Digit PIN</div>
           <button id="callCustBtn" class="call-btn" onclick="toggleCall()">📞 Call Rider</button>
         </div>
-        <input id="pinField" type="text" maxlength="4" placeholder="••••" />
-        <button class="btn btn-green" onclick="submitOtp()">Verify & Start Ride</button>
+        <input id="pinField" type="number" pattern="[0-9]*" inputmode="numeric" maxlength="4" placeholder="••••" />
+        <button class="btn btn-green" onclick="submitOtp()" style="margin-top:8px;">Verify & Start Ride</button>
       </div>
 
       <!-- Active Telemetry & Completion -->
       <div id="activeTripSec" class="card" style="display:none; border-color:#10b981;">
         <div class="label" style="color:#10b981;">GPS Telemetry Active</div>
-        <div id="activeRouteName" style="font-size:12px; font-weight:600;">Streaming turn-by-turn...</div>
-        <button class="btn btn-blue" onclick="finishTrip()" style="margin-top:8px;">Complete Trip</button>
+        <div id="activeRouteName" style="font-size:13px; font-weight:600;">Streaming turn-by-turn...</div>
+        <button class="btn btn-blue" onclick="finishTrip()" style="margin-top:10px;">Complete Trip</button>
       </div>
     </div>
   </div>
 
-  <audio id="remoteAudio" autoplay></audio>
+  <audio id="remoteAudio" autoplay playsinline></audio>
 
   <script>
-    // Explicitly connect to current host or fallback to port 4000
-    const socket = io(window.location.origin.includes('http') ? window.location.origin : 'http://localhost:4000');
+    // Socket initialization with mobile cellular fallback
+    const socket = io(window.location.origin, {
+      transports: ['websocket', 'polling']
+    });
 
     let activeRideId = null, targetCustomerSocketId = null, currentPath = null;
     let peerConnection = null, localStream = null, isCalling = false;
@@ -121,15 +125,20 @@
     let vehicleMarker = null;
     let dynamicPolyline = null;
 
-    try {
-      map = L.map('driverMap').setView([17.9950, 79.5450], 12);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-      L.marker(pickupCoords).addTo(map).bindPopup('Kazipet');
-      L.marker(dropCoords).addTo(map).bindPopup('Public Garden');
-      vehicleMarker = L.circleMarker(pickupCoords, { radius: 8, color: '#f59e0b', fillColor: '#fbbf24', fillOpacity: 1 }).addTo(map);
-    } catch (e) {
-      console.error('Leaflet initialization error:', e);
-    }
+    // Delayed Leaflet initialization to guarantee DOM sizing on mobile
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        map = L.map('driverMap').setView([17.9950, 79.5450], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        L.marker(pickupCoords).addTo(map).bindPopup('Kazipet');
+        L.marker(dropCoords).addTo(map).bindPopup('Public Garden');
+        vehicleMarker = L.circleMarker(pickupCoords, { radius: 8, color: '#f59e0b', fillColor: '#fbbf24', fillOpacity: 1 }).addTo(map);
+
+        setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+      } catch (e) {
+        console.error('Leaflet map error:', e);
+      }
+    });
 
     function fetchMetrics() {
       fetch('/api/driver/drv_101/metrics')
@@ -139,7 +148,7 @@
           document.getElementById('statEarnings').innerText = `₹${m.total_earnings || 0}`;
           document.getElementById('statCut').innerText = `₹${Math.round(m.platform_cut || 0)}`;
         })
-        .catch(err => console.log('Metrics fetch skipped (offline or initial):', err));
+        .catch(err => console.log('Metrics fetch error:', err));
     }
 
     fetchMetrics();
@@ -155,6 +164,7 @@
       dutyTag.style.background = '#10b981';
       dutyTag.style.color = '#041f17';
       document.getElementById('goOnlineBtn').style.display = 'none';
+      if (map) map.invalidateSize();
     }
 
     socket.on('driver:incoming_alert', (order) => {
@@ -256,7 +266,7 @@
       setTimeout(fetchMetrics, 500);
     }
 
-    // WebRTC Audio Calls
+    // Mobile-compatible WebRTC Calling
     async function toggleCall() { isCalling ? endCall() : await startCall(); }
 
     async function startCall() {
@@ -275,7 +285,318 @@
         socket.emit('call:initiate', { targetSocketId: targetCustomerSocketId, offer });
         isCalling = true;
         document.getElementById('callCustBtn').innerText = '🔴 End';
-      } catch (err) { alert('Microphone access is needed for VoIP calling.'); }
+      } catch (err) { alert('Microphone permission required for VoIP calling.'); }
+    }
+
+    socket.on('call:accepted', async ({ answer }) => {
+      if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('call:incoming', async ({ fromSocketId, offer }) => {
+      targetCustomerSocketId = fromSocketId;
+      if (confirm('Incoming call from Rider. Accept?')) {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+        peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
+        peerConnection.onicecandidate = e => {
+          if (e.candidate) socket.emit('call:ice_candidate', { targetSocketId: fromSocketId, candidate: e.candidate });
+        };
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('call:accept', { targetSocketId: fromSocketId, answer });
+        isCalling = true;
+        document.getElementById('callCustBtn').innerText = '🔴 End';
+      }
+    });<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Velox Driver</title>
+  
+  <!-- CSS & CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    html, body { width: 100%; min-height: 100vh; background: #0b0f17; color: #fff; display: flex; justify-content: center; }
+    .phone { width: 100%; max-width: 440px; background: #131b26; min-height: 100vh; display: flex; flex-direction: column; }
+    .header { padding: 14px 16px; background: #16202c; border-bottom: 1px solid #1f293d; font-weight: 700; color: #0284c7; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+    #driverMap { width: 100%; height: 220px; min-height: 220px; background: #1e293b; z-index: 1; }
+    .content { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .card { background: #1c2738; padding: 12px; border-radius: 12px; border: 1px solid #29384f; }
+    .label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .stat-box { background: #141c2b; border: 1px solid #29384f; border-radius: 8px; padding: 8px; text-align: center; }
+    .stat-val { font-size: 15px; font-weight: 800; color: #10b981; }
+    .stat-sub { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+    .payout { font-size: 26px; font-weight: 800; color: #10b981; }
+    .btn { border: none; padding: 14px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer; width: 100%; }
+    .btn-green { background: #10b981; color: #041f17; }
+    .btn-blue { background: #0284c7; color: #fff; }
+    .btn-amber { background: #f59e0b; color: #041f17; }
+    .btn-red { background: #ef4444; color: #fff; }
+    input { width: 100%; padding: 12px; background: #070a0f; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 20px; text-align: center; letter-spacing: 6px; font-weight: 700; }
+    .call-btn { background: #0284c7; color: #fff; padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .timer-bar { width: 100%; height: 5px; background: #334155; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+    .timer-fill { height: 100%; background: #f59e0b; width: 100%; transition: width 1s linear; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="header">
+      <span>Velox Partner</span>
+      <span id="dutyTag" style="font-size:11px; padding:3px 8px; border-radius:10px; background:#334155;">Offline</span>
+    </div>
+
+    <!-- Live Performance Ledger -->
+    <div class="card" style="margin: 10px 14px 0;">
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-val" id="statTrips">0</div>
+          <div class="stat-sub">Trips</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statEarnings">₹0</div>
+          <div class="stat-sub">Net Pay</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="statCut" style="color:#94a3b8;">₹0</div>
+          <div class="stat-sub">Fee (15%)</div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="driverMap" style="margin-top: 10px;"></div>
+
+    <div class="content">
+      <button id="goOnlineBtn" class="btn btn-blue" onclick="goOnline()">Go Online</button>
+
+      <!-- Timed Dispatch Alert Card -->
+      <div id="orderCard" class="card" style="display:none; border-color:#f59e0b;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="label" style="color:#f59e0b; margin-bottom:0;">🚨 New Trip Request</div>
+          <span id="secondsLeft" style="font-size:12px; font-weight:800; color:#f59e0b;">15s</span>
+        </div>
+
+        <div class="timer-bar">
+          <div id="timerFill" class="timer-fill"></div>
+        </div>
+
+        <div class="payout" id="payoutText" style="margin-top:8px;">₹69.00</div>
+        <div id="vehicleTag" style="font-size:13px; font-weight:700; color:#38bdf8;">🏍️ Bike</div>
+        <div id="routeDesc" style="font-size:12px; color:#94a3b8; margin: 4px 0;">Pickup: Kazipet ➔ Public Garden</div>
+        
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button id="acceptBtn" class="btn btn-amber" style="flex:2;" onclick="acceptOrder()">Accept</button>
+          <button class="btn btn-red" style="flex:1;" onclick="declineOrder()">Decline</button>
+        </div>
+      </div>
+
+      <!-- OTP Entry Card -->
+      <div id="otpInputSec" class="card" style="display:none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div class="label">Enter Rider's 4-Digit PIN</div>
+          <button id="callCustBtn" class="call-btn" onclick="toggleCall()">📞 Call Rider</button>
+        </div>
+        <input id="pinField" type="number" pattern="[0-9]*" inputmode="numeric" maxlength="4" placeholder="••••" />
+        <button class="btn btn-green" onclick="submitOtp()" style="margin-top:8px;">Verify & Start Ride</button>
+      </div>
+
+      <!-- Active Telemetry & Completion -->
+      <div id="activeTripSec" class="card" style="display:none; border-color:#10b981;">
+        <div class="label" style="color:#10b981;">GPS Telemetry Active</div>
+        <div id="activeRouteName" style="font-size:13px; font-weight:600;">Streaming turn-by-turn...</div>
+        <button class="btn btn-blue" onclick="finishTrip()" style="margin-top:10px;">Complete Trip</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
+  <script>
+    // Socket initialization with mobile cellular fallback
+    const socket = io(window.location.origin, {
+      transports: ['websocket', 'polling']
+    });
+
+    let activeRideId = null, targetCustomerSocketId = null, currentPath = null;
+    let peerConnection = null, localStream = null, isCalling = false;
+    let countdownInterval = null;
+    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    const pickupCoords = [17.9784, 79.5218];
+    const dropCoords = [18.0125, 79.5606];
+
+    let map = null;
+    let vehicleMarker = null;
+    let dynamicPolyline = null;
+
+    // Delayed Leaflet initialization to guarantee DOM sizing on mobile
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        map = L.map('driverMap').setView([17.9950, 79.5450], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        L.marker(pickupCoords).addTo(map).bindPopup('Kazipet');
+        L.marker(dropCoords).addTo(map).bindPopup('Public Garden');
+        vehicleMarker = L.circleMarker(pickupCoords, { radius: 8, color: '#f59e0b', fillColor: '#fbbf24', fillOpacity: 1 }).addTo(map);
+
+        setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+      } catch (e) {
+        console.error('Leaflet map error:', e);
+      }
+    });
+
+    function fetchMetrics() {
+      fetch('/api/driver/drv_101/metrics')
+        .then(r => r.json())
+        .then(m => {
+          document.getElementById('statTrips').innerText = m.total_trips || 0;
+          document.getElementById('statEarnings').innerText = `₹${m.total_earnings || 0}`;
+          document.getElementById('statCut').innerText = `₹${Math.round(m.platform_cut || 0)}`;
+        })
+        .catch(err => console.log('Metrics fetch error:', err));
+    }
+
+    fetchMetrics();
+
+    socket.on('driver:refresh_metrics', () => {
+      fetchMetrics();
+    });
+
+    function goOnline() {
+      socket.emit('driver:online', { driverId: 'drv_101', name: 'Ramesh Rao', vehiclePlate: 'TS 03 EQ 4812' });
+      const dutyTag = document.getElementById('dutyTag');
+      dutyTag.innerText = 'Online';
+      dutyTag.style.background = '#10b981';
+      dutyTag.style.color = '#041f17';
+      document.getElementById('goOnlineBtn').style.display = 'none';
+      if (map) map.invalidateSize();
+    }
+
+    socket.on('driver:incoming_alert', (order) => {
+      activeRideId = order.rideId;
+      currentPath = order.path;
+      document.getElementById('payoutText').innerText = `₹${order.driverPayout}.00`;
+      document.getElementById('vehicleTag').innerText = `Class: ${order.vehicleType}`;
+      document.getElementById('routeDesc').innerText = `Via ${order.selectedRouteName} (${order.distanceKm} km)`;
+      document.getElementById('orderCard').style.display = 'block';
+
+      if (map && currentPath) {
+        if (dynamicPolyline) map.removeLayer(dynamicPolyline);
+        dynamicPolyline = L.polyline(currentPath, { color: '#0284c7', weight: 4 }).addTo(map);
+      }
+
+      let remaining = 15;
+      document.getElementById('secondsLeft').innerText = `${remaining}s`;
+      document.getElementById('timerFill').style.width = '100%';
+
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        remaining--;
+        document.getElementById('secondsLeft').innerText = `${remaining}s`;
+        document.getElementById('timerFill').style.width = `${(remaining / 15) * 100}%`;
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          dismissAlert();
+        }
+      }, 1000);
+    });
+
+    socket.on('driver:alert_revoked', ({ rideId }) => {
+      if (activeRideId === rideId) dismissAlert();
+    });
+
+    function dismissAlert() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      document.getElementById('orderCard').style.display = 'none';
+      if (map && dynamicPolyline) { 
+        map.removeLayer(dynamicPolyline); 
+        dynamicPolyline = null; 
+      }
+    }
+
+    function declineOrder() {
+      socket.emit('driver:decline', { rideId: activeRideId, driverId: 'drv_101' });
+      dismissAlert();
+    }
+
+    function acceptOrder() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      socket.emit('driver:accept', { rideId: activeRideId, driverId: 'drv_101' });
+      document.getElementById('orderCard').style.display = 'none';
+      document.getElementById('otpInputSec').style.display = 'block';
+    }
+
+    socket.on('driver:accepted_success', (data) => {
+      targetCustomerSocketId = data.customerSocketId;
+      document.getElementById('dutyTag').innerText = 'Assigned';
+    });
+
+    socket.on('driver:accept_failed', (res) => {
+      alert(res.message);
+      dismissAlert();
+    });
+
+    function submitOtp() {
+      const pin = document.getElementById('pinField').value;
+      socket.emit('driver:verify_otp', { rideId: activeRideId, inputOtp: pin });
+    }
+
+    socket.on('otp:result', (res) => {
+      if (res.success) {
+        document.getElementById('otpInputSec').style.display = 'none';
+        document.getElementById('activeTripSec').style.display = 'block';
+
+        let step = 0;
+        const totalSteps = currentPath.length;
+        const interval = setInterval(() => {
+          step++;
+          if (step < totalSteps) {
+            const coord = currentPath[step];
+            if (vehicleMarker) vehicleMarker.setLatLng(coord);
+            socket.emit('ride:telemetry', { rideId: activeRideId, lat: coord[0], lng: coord[1], progress: step / totalSteps });
+          } else {
+            clearInterval(interval);
+          }
+        }, 1200);
+      } else {
+        alert('Invalid PIN! Use 1234');
+      }
+    });
+
+    function finishTrip() {
+      socket.emit('driver:complete', { rideId: activeRideId });
+      document.getElementById('activeTripSec').style.display = 'none';
+      document.getElementById('dutyTag').innerText = 'Trip Finished';
+      if (isCalling) endCall();
+      setTimeout(fetchMetrics, 500);
+    }
+
+    // Mobile-compatible WebRTC Calling
+    async function toggleCall() { isCalling ? endCall() : await startCall(); }
+
+    async function startCall() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+        peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
+        peerConnection.onicecandidate = e => {
+          if (e.candidate && targetCustomerSocketId) {
+            socket.emit('call:ice_candidate', { targetSocketId: targetCustomerSocketId, candidate: e.candidate });
+          }
+        };
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('call:initiate', { targetSocketId: targetCustomerSocketId, offer });
+        isCalling = true;
+        document.getElementById('callCustBtn').innerText = '🔴 End';
+      } catch (err) { alert('Microphone permission required for VoIP calling.'); }
     }
 
     socket.on('call:accepted', async ({ answer }) => {
@@ -300,6 +621,23 @@
         document.getElementById('callCustBtn').innerText = '🔴 End';
       }
     });
+
+    socket.on('call:ice_candidate', async ({ candidate }) => {
+      if (peerConnection && candidate) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
+    socket.on('call:ended', () => endCall(false));
+
+    function endCall(notify = true) {
+      if (notify && targetCustomerSocketId) socket.emit('call:end', { targetSocketId: targetCustomerSocketId });
+      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+      if (peerConnection) { peerConnection.close(); peerConnection = null; }
+      isCalling = false;
+      document.getElementById('callCustBtn').innerText = '📞 Call Rider';
+    }
+  </script>
+</body>
+</html>
 
     socket.on('call:ice_candidate', async ({ candidate }) => {
       if (peerConnection && candidate) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
