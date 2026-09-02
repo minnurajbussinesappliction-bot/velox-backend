@@ -2,292 +2,422 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Velox Passenger</title>
-  <script src="/socket.io/socket.io.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Velox Ride</title>
+
+  <!-- Leaflet & Socket.io CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
-    body { background: #0b0f17; color: #fff; display: flex; justify-content: center; padding: 20px; }
-    .phone { width: 380px; background: #131b26; border-radius: 24px; border: 1px solid #1f293d; overflow: hidden; display: flex; flex-direction: column; min-height: 700px; position: relative; }
-    .header { padding: 16px; background: #16202c; border-bottom: 1px solid #1f293d; font-weight: 700; color: #10b981; font-size: 18px; }
-    #map { width: 100%; height: 180px; background: #1e293b; }
-    .content { padding: 12px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
-    .card { background: #1c2738; padding: 10px 12px; border-radius: 12px; border: 1px solid #29384f; }
-    .label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
-    .v-tabs { display: flex; gap: 6px; margin-bottom: 4px; }
-    .v-tab { flex: 1; text-align: center; padding: 8px 4px; background: #141c2b; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; }
-    .v-tab.active { border-color: #10b981; background: rgba(16, 185, 129, 0.15); color: #10b981; }
-    .route-opt { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 4px; cursor: pointer; background: #141c2b; font-size: 12px; }
-    .route-opt.active { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-    .fare-row { display: flex; justify-content: space-between; font-size: 12px; }
-    .fare-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; border-top: 1px solid #29384f; padding-top: 4px; margin-top: 4px; }
-    .otp-card { text-align: center; border: 1px dashed #10b981; background: rgba(16, 185, 129, 0.08); padding: 8px; border-radius: 10px; }
-    .otp-num { font-size: 24px; font-weight: 900; letter-spacing: 6px; color: #10b981; }
-    .btn { background: #10b981; color: #041f17; border: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .call-btn { background: #0284c7; color: #fff; padding: 6px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; }
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
-    /* Completion & Rating Modal */
-    .rating-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(11, 15, 23, 0.95); display: none; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 1000; }
-    .star-row { display: flex; gap: 8px; font-size: 28px; cursor: pointer; margin: 12px 0; }
-    .chip-row { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tip-chip { padding: 6px 12px; border-radius: 20px; border: 1px solid #334155; background: #1c2738; font-size: 12px; font-weight: 700; cursor: pointer; }
-    .tip-chip.active { border-color: #10b981; background: rgba(16, 185, 129, 0.2); color: #10b981; }
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    html, body { width: 100%; min-height: 100vh; background: #f1f5f9; color: #0f172a; display: flex; justify-content: center; }
+    
+    .phone-container {
+      width: 100%;
+      max-width: 440px;
+      min-height: 100vh;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    /* Top Bar: Home Ride | Wallet Money | Profile */
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: #ffffff;
+      border-bottom: 2px solid #0f172a;
+      gap: 8px;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 8px 4px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f8fafc;
+      border: 1.5px solid #0f172a;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .nav-btn:active { background: #0f172a; color: #fff; }
+
+    /* Pickup & Drop Input Bars */
+    .input-box {
+      margin: 10px 14px;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      gap: 8px;
+      box-shadow: 2px 2px 0px #0f172a;
+    }
+    .input-box span { font-size: 16px; }
+    .input-box input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      background: transparent;
+    }
+
+    /* Map Box */
+    .map-frame {
+      margin: 0 14px;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 2px 2px 0px #0f172a;
+      position: relative;
+    }
+    #map {
+      width: 100%;
+      height: 250px;
+      background: #e2e8f0;
+    }
+
+    /* Dynamic Ride Selection Sheet */
+    .booking-panel {
+      margin: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .v-card {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+      cursor: pointer;
+      background: #f8fafc;
+      transition: border-color 0.2s;
+    }
+    .v-card.selected {
+      border: 2px solid #0f172a;
+      background: #e2e8f0;
+    }
+    .v-icon { font-size: 20px; margin-bottom: 2px; }
+    .v-title { font-size: 11px; font-weight: 700; }
+    .v-price { font-size: 13px; font-weight: 800; color: #16a34a; margin-top: 2px; }
+
+    .cta-btn {
+      width: 100%;
+      padding: 14px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px #000;
+    }
+    .cta-btn:active { transform: translateY(1px); box-shadow: 1px 1px 0px #000; }
+
+    /* Saved & Recent Trips Card */
+    .fav-card {
+      margin: 10px 14px;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #ffffff;
+      box-shadow: 2px 2px 0px #0f172a;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .fav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .chip {
+      background: #f1f5f9;
+      border: 1px solid #94a3b8;
+      padding: 5px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .chip:hover { background: #0f172a; color: #fff; }
+
+    /* Bottom Branding & Achievements Banner */
+    .branding-banner {
+      margin: 10px 14px 20px;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      box-shadow: 2px 2px 0px #0f172a;
+    }
+    .brand-title {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .brand-motto {
+      font-size: 11px;
+      color: #64748b;
+      margin: 2px 0 6px;
+    }
+    .rider-achievement {
+      display: flex;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Modal Popups for Active Ride / VoIP / Review */
+    .status-panel {
+      display: none;
+      margin: 10px 14px;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+      box-shadow: 2px 2px 0px #0f172a;
+    }
   </style>
 </head>
 <body>
-  <div class="phone">
-    <div class="header">Velox • Passenger</div>
-    <div id="map"></div>
-    <div class="content">
-      
+  <div class="phone-container">
+    
+    <!-- Top Bar -->
+    <div class="top-nav">
+      <button class="nav-btn" onclick="resetView()">Home Ride</button>
+      <button class="nav-btn" onclick="alert('Wallet Balance: ₹450.00')">Wallet: ₹450</button>
+      <button class="nav-btn" onclick="alert('Profile: Rahul Verma\nRating: 4.9 ★')">Profile</button>
+    </div>
+
+    <!-- Pickup Bar -->
+    <div class="input-box">
+      <span>🟢</span>
+      <input type="text" id="pickupInput" value="Kazipet Junction, Warangal" placeholder="Current address / pick up address" />
+    </div>
+
+    <!-- Map Viewport -->
+    <div class="map-frame">
+      <div id="map"></div>
+    </div>
+
+    <!-- Drop Location Bar -->
+    <div class="input-box">
+      <span>🔴</span>
+      <input type="text" id="dropInput" value="Public Garden, Hanamkonda" placeholder="Drop Location" />
+    </div>
+
+    <!-- Dynamic Dispatch Selection -->
+    <div id="bookingCard" class="booking-panel">
+      <div class="vehicle-grid">
+        <div class="v-card selected" onclick="selectTier('Bike', 25, 8, this)">
+          <div class="v-icon">🏍️</div>
+          <div class="v-title">Bike</div>
+          <div class="v-price" id="bikePrice">₹69</div>
+        </div>
+        <div class="v-card" onclick="selectTier('Auto', 35, 12, this)">
+          <div class="v-icon">🛺</div>
+          <div class="v-title">Auto</div>
+          <div class="v-price" id="autoPrice">₹103</div>
+        </div>
+        <div class="v-card" onclick="selectTier('Cab', 60, 18, this)">
+          <div class="v-icon">🚗</div>
+          <div class="v-title">Cab</div>
+          <div class="v-price" id="cabPrice">₹162</div>
+        </div>
+      </div>
+
+      <button class="cta-btn" id="requestBtn" onclick="requestRide()">REQUEST VELOX RIDE</button>
+    </div>
+
+    <!-- Active Ride Panel (Dispatches, PIN, VoIP) -->
+    <div id="activeRideCard" class="status-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:700;">Ride Active</div>
+          <div id="driverStatus" style="font-size:16px; font-weight:900;">Looking for nearby drivers...</div>
+        </div>
+        <button id="callDriverBtn" class="nav-btn" style="display:none; padding:6px 12px;" onclick="toggleVoipCall()">📞 Call</button>
+      </div>
+
+      <div id="pinBox" style="display:none; margin-top:10px; background:#f8fafc; border:1.5px dashed #0f172a; padding:8px; border-radius:6px; text-align:center;">
+        <span style="font-size:11px; color:#64748b; font-weight:700;">SHARE OTP WITH DRIVER</span>
+        <div style="font-size:22px; font-weight:900; letter-spacing:4px;">1234</div>
+      </div>
+    </div>
+
+    <!-- Settlement & Rating Panel -->
+    <div id="settleCard" class="status-panel">
+      <div style="font-weight:900; font-size:16px;">Trip Completed!</div>
+      <div style="font-size:12px; color:#64748b; margin-top:2px;">Rate your experience with Ramesh Rao</div>
+      <div style="margin: 10px 0; font-size:20px; cursor:pointer;" onclick="submitRating()">★★★★★</div>
+      <button class="cta-btn" onclick="submitRating()">Confirm & Return Home</button>
+    </div>
+
+    <!-- Fav & Recent Rides Card -->
+    <div class="fav-card">
+      <div class="fav-header">
+        <span>Fav rides</span>
+        <span style="font-size: 20px; color:#ef4444;">❤️</span>
+      </div>
+
       <div>
-        <div class="label">Vehicle Class</div>
-        <div class="v-tabs">
-          <div id="tab-bike" class="v-tab active" onclick="setVehicle('bike')">🏍️ Bike</div>
-          <div id="tab-auto" class="v-tab" onclick="setVehicle('auto')">🛺 Auto</div>
-          <div id="tab-cab" class="v-tab" onclick="setVehicle('cab')">🚗 Cab</div>
+        <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Recent rides</div>
+        <div class="tag-row">
+          <div class="chip" onclick="setDestination('Hanamkonda Bus Station')">🕒 Hanamkonda Bus Stand (5.4 km)</div>
+          <div class="chip" onclick="setDestination('NIT Warangal Main Gate')">🕒 NIT Warangal (3.1 km)</div>
         </div>
       </div>
 
-      <div id="routeSection">
-        <div class="label">Route Options</div>
-        <div id="route1" class="route-opt active" onclick="selectRoute(1)">
-          <div>
-            <div style="font-weight: 700;">Hanamkonda Main Rd</div>
-            <div style="color: #94a3b8; font-size: 10px;">6.0 km • Direct</div>
-          </div>
-          <div id="price1" style="font-weight: 700; color: #10b981;">₹81</div>
+      <div style="margin-top:4px;">
+        <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Specific rides like home/office</div>
+        <div class="tag-row">
+          <div class="chip" onclick="setDestination('My Home, Kazipet')">🏠 Home</div>
+          <div class="chip" onclick="setDestination('Tech Park Office, Warangal')">💼 Office</div>
         </div>
-        <div id="route2" class="route-opt" onclick="selectRoute(2)">
-          <div>
-            <div style="font-weight: 700;">Express Outer Bypass</div>
-            <div style="color: #94a3b8; font-size: 10px;">7.7 km • Signal-free</div>
-          </div>
-          <div id="price2" style="font-weight: 700; color: #10b981;">₹95</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="label">Fare Summary</div>
-        <div class="fare-row"><span>Base & Distance</span><span id="fareBase">₹73.00</span></div>
-        <div class="fare-row"><span>Platform & GST</span><span id="fareTax">₹8.00</span></div>
-        <div class="fare-total"><span>Total</span><span id="fareGrand" style="color:#10b981;">₹81.00</span></div>
-      </div>
-
-      <div id="otpSection" class="otp-card" style="display: none;">
-        <div class="label" style="color: #10b981;">Share PIN With Driver</div>
-        <div id="otpBox" class="otp-num">1234</div>
-      </div>
-
-      <div id="driverCard" class="card" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div class="label">Assigned Driver</div>
-            <div id="driverInfo" style="font-size:12px; font-weight:600;">--</div>
-          </div>
-          <button id="callBtn" class="call-btn" onclick="toggleCall()">📞 Call Driver</button>
-        </div>
-      </div>
-
-      <audio id="remoteAudio" autoplay></audio>
-
-      <div style="margin-top: auto;">
-        <button id="bookBtn" class="btn" onclick="bookRide()">Confirm & Book (₹81)</button>
       </div>
     </div>
 
-    <!-- Ride Rating & Tip Modal -->
-    <div id="ratingModal" class="rating-overlay">
-      <div style="font-size: 18px; font-weight: 800; color: #10b981;">Trip Completed!</div>
-      <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rate your experience with Ramesh</div>
-      
-      <div class="star-row" id="starContainer">
-        <span onclick="rate(1)">⭐</span>
-        <span onclick="rate(2)">⭐</span>
-        <span onclick="rate(3)">⭐</span>
-        <span onclick="rate(4)">⭐</span>
-        <span onclick="rate(5)">⭐</span>
+    <!-- Branding & Achievements -->
+    <div class="branding-banner">
+      <div class="brand-title">⚡ VELOX MOBILITY</div>
+      <div class="brand-motto">Instant Hyperlocal Dispatch • Zero Haggling</div>
+      <div class="rider-achievement">
+        <span>🏆 Rider Tier: Gold Commuter</span>
+        <span style="color:#16a34a;">18 Safe Trips</span>
       </div>
-
-      <div class="label" style="margin-top: 8px;">Add Driver Tip</div>
-      <div class="chip-row">
-        <div class="tip-chip" onclick="setTip(0, this)">No Tip</div>
-        <div class="tip-chip" onclick="setTip(10, this)">₹10</div>
-        <div class="tip-chip" onclick="setTip(20, this)">₹20</div>
-        <div class="tip-chip" onclick="setTip(50, this)">₹50</div>
-      </div>
-
-      <button class="btn" onclick="submitFeedback()">Submit Feedback</button>
     </div>
+
   </div>
 
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
   <script>
-    const socket = io();
-
-    let vehicleType = 'bike';
-    let activeRouteId = 1;
-    let targetDriverSocketId = null;
-    let completedRideId = null;
-    let selectedRating = 5;
-    let selectedTip = 0;
-
+    const socket = io(window.location.origin, { transports: ['websocket', 'polling'] });
+    
+    let activeRideId = null;
+    let assignedDriverSocketId = null;
+    let selectedTier = 'Bike';
+    let tripFare = 69;
     let peerConnection = null, localStream = null, isCalling = false;
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
     const pickupCoords = [17.9784, 79.5218];
     const dropCoords = [18.0125, 79.5606];
 
-    const pathRoute1 = [
-      pickupCoords,
-      [17.9820, 79.5260], [17.9865, 79.5315], [17.9920, 79.5390],
-      [17.9975, 79.5440], [18.0020, 79.5490], [18.0070, 79.5540],
-      dropCoords
-    ];
+    let map = null;
+    let riderMarker = null;
+    let carMarker = null;
 
-    const pathRoute2 = [
-      pickupCoords,
-      [17.9710, 79.5300], [17.9650, 79.5450], [17.9720, 79.5620],
-      [17.9850, 79.5750], [17.9980, 79.5720], [18.0080, 79.5660],
-      dropCoords
-    ];
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        map = L.map('map').setView([17.9950, 79.5450], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        riderMarker = L.marker(pickupCoords).addTo(map).bindPopup('Pickup: Kazipet');
+        L.marker(dropCoords).addTo(map).bindPopup('Drop: Public Garden');
+        setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+      } catch (e) {
+        console.error('Leaflet error:', e);
+      }
+    });
 
-    const map = L.map('map').setView([17.9950, 79.5450], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    L.marker(pickupCoords).addTo(map).bindPopup('Kazipet');
-    L.marker(dropCoords).addTo(map).bindPopup('Public Garden');
-
-    let activePolyline = L.polyline(pathRoute1, { color: '#10b981', weight: 4 }).addTo(map);
-    let driverMarker = null;
-
-    const rates = {
-      bike: { base: 25, perKm: 8, name: 'Bike' },
-      auto: { base: 35, perKm: 12, name: 'Auto' },
-      cab:  { base: 55, perKm: 16, name: 'Cab' }
-    };
-
-    function recalculate() {
-      const cfg = rates[vehicleType];
-      const dist1 = 6.0, dist2 = 7.7;
-
-      const f1 = Math.round(cfg.base + (dist1 * cfg.perKm) + 4 + ((cfg.base + (dist1 * cfg.perKm) + 4) * 0.05));
-      const f2 = Math.round(cfg.base + (dist2 * cfg.perKm) + 4 + ((cfg.base + (dist2 * cfg.perKm) + 4) * 0.05));
-
-      document.getElementById('price1').innerText = `₹${f1}`;
-      document.getElementById('price2').innerText = `₹${f2}`;
-
-      const activeDist = activeRouteId === 1 ? dist1 : dist2;
-      const grandTotal = activeRouteId === 1 ? f1 : f2;
-      const baseCost = cfg.base + (activeDist * cfg.perKm);
-      const taxGst = grandTotal - baseCost;
-
-      document.getElementById('fareBase').innerText = `₹${baseCost.toFixed(2)}`;
-      document.getElementById('fareTax').innerText = `₹${taxGst.toFixed(2)}`;
-      document.getElementById('fareGrand').innerText = `₹${grandTotal}.00`;
-      document.getElementById('bookBtn').innerText = `Confirm & Book ${cfg.name} (₹${grandTotal})`;
+    function selectTier(name, base, perKm, el) {
+      selectedTier = name;
+      document.querySelectorAll('.v-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      const dist = 5.5; // Kazipet to Public Garden
+      tripFare = Math.round(base + (dist * perKm));
     }
 
-    function setVehicle(type) {
-      vehicleType = type;
-      ['bike', 'auto', 'cab'].forEach(t => document.getElementById(`tab-${t}`).className = `v-tab ${t === type ? 'active' : ''}`);
-      recalculate();
+    function setDestination(place) {
+      document.getElementById('dropInput').value = place;
     }
 
-    function selectRoute(id) {
-      activeRouteId = id;
-      document.getElementById('route1').className = `route-opt ${id === 1 ? 'active' : ''}`;
-      document.getElementById('route2').className = `route-opt ${id === 2 ? 'active' : ''}`;
-      map.removeLayer(activePolyline);
-      activePolyline = L.polyline(id === 1 ? pathRoute1 : pathRoute2, { color: '#10b981', weight: 4 }).addTo(map);
-      recalculate();
+    function resetView() {
+      document.getElementById('bookingCard').style.display = 'flex';
+      document.getElementById('activeRideCard').style.display = 'none';
+      document.getElementById('settleCard').style.display = 'none';
+      if (map) map.invalidateSize();
     }
 
-    function bookRide() {
-      document.getElementById('bookBtn').disabled = true;
-      document.getElementById('bookBtn').innerText = 'Requesting...';
-      const grandTotal = parseInt(document.getElementById('fareGrand').innerText.replace('₹', ''));
-      const driverPayout = Math.round(grandTotal * 0.85);
+    function requestRide() {
+      activeRideId = 'ride_' + Date.now();
+      document.getElementById('bookingCard').style.display = 'none';
+      document.getElementById('activeRideCard').style.display = 'block';
+      document.getElementById('driverStatus').innerText = 'Locating closest driver...';
 
       socket.emit('ride:request', {
-        pickupAddress: 'Kazipet Station Rd',
-        dropAddress: 'GWMC Public Garden, Hanamkonda',
-        vehicleType: rates[vehicleType].name,
-        selectedRouteName: activeRouteId === 1 ? 'Hanamkonda Main Rd' : 'Express Outer Bypass',
-        distanceKm: activeRouteId === 1 ? 6.0 : 7.7,
-        grandTotal,
-        driverPayout,
-        path: activeRouteId === 1 ? pathRoute1 : pathRoute2
+        rideId: activeRideId,
+        pickup: pickupCoords,
+        drop: dropCoords,
+        vehicleType: selectedTier,
+        fare: tripFare,
+        selectedRouteName: 'Main Corridor',
+        distanceKm: 5.5
       });
     }
 
-    socket.on('ride:created', (data) => {
-      document.getElementById('otpSection').style.display = 'block';
-      document.getElementById('otpBox').innerText = data.otp || '1234';
-      document.getElementById('bookBtn').innerText = 'Waiting for driver...';
+    socket.on('ride:assigned', (data) => {
+      assignedDriverSocketId = data.driverSocketId;
+      document.getElementById('driverStatus').innerText = `${data.name || 'Ramesh Rao'} (${data.vehiclePlate || 'TS 03 EQ 4812'}) is arriving`;
+      document.getElementById('pinBox').style.display = 'block';
+      document.getElementById('callDriverBtn').style.display = 'block';
     });
 
-    socket.on('ride:matched', (driver) => {
-      targetDriverSocketId = driver.driverSocketId;
-      document.getElementById('driverCard').style.display = 'block';
-      document.getElementById('driverInfo').innerText = `${driver.driverName} • ${driver.vehiclePlate}`;
-      document.getElementById('bookBtn').innerText = 'Driver Assigned';
-      driverMarker = L.circleMarker(pickupCoords, { radius: 8, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: 1 }).addTo(map);
+    socket.on('ride:telemetry_update', (data) => {
+      if (data.rideId === activeRideId) {
+        if (!carMarker && map) {
+          carMarker = L.circleMarker([data.lat, data.lng], { radius: 8, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: 1 }).addTo(map);
+        } else if (carMarker) {
+          carMarker.setLatLng([data.lat, data.lng]);
+        }
+      }
     });
 
-    socket.on('ride:started', () => {
-      document.getElementById('bookBtn').innerText = 'Trip In Progress';
-    });
-
-    socket.on('ride:track_step', ({ lat, lng }) => {
-      if (driverMarker) driverMarker.setLatLng([lat, lng]);
-    });
-
-    socket.on('ride:completed', (data) => {
-      completedRideId = data ? data.rideId : null;
-      document.getElementById('ratingModal').style.display = 'flex';
+    socket.on('ride:completed_client', () => {
+      document.getElementById('activeRideCard').style.display = 'none';
+      document.getElementById('settleCard').style.display = 'block';
       if (isCalling) endCall();
     });
 
-    socket.on('ride:timeout', ({ message }) => {
-      alert(message);
-      document.getElementById('bookBtn').disabled = false;
-      document.getElementById('bookBtn').innerText = 'Retry Booking';
-      document.getElementById('otpSection').style.display = 'none';
-      document.getElementById('routeSection').style.opacity = '1';
-    });
-
-    // Feedback & Tip handlers
-    function rate(stars) {
-      selectedRating = stars;
-      const spans = document.getElementById('starContainer').children;
-      for (let i = 0; i < 5; i++) {
-        spans[i].style.opacity = i < stars ? '1' : '0.3';
-      }
+    function submitRating() {
+      socket.emit('customer:rate_and_tip', { rideId: activeRideId, rating: 5, tip: 20 });
+      alert('Thank you for riding with Velox!');
+      resetView();
     }
 
-    function setTip(amount, el) {
-      selectedTip = amount;
-      document.querySelectorAll('.tip-chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-    }
-
-    function submitFeedback() {
-      socket.emit('ride:submit_feedback', {
-        rideId: completedRideId,
-        rating: selectedRating,
-        tip: selectedTip
-      });
-      document.getElementById('ratingModal').style.display = 'none';
-      document.getElementById('bookBtn').disabled = false;
-      document.getElementById('bookBtn').innerText = 'Book Another Ride';
-      document.getElementById('otpSection').style.display = 'none';
-      document.getElementById('driverCard').style.display = 'none';
-    }
-
-    // WebRTC Calling
-    async function toggleCall() { isCalling ? endCall() : await startCall(); }
+    // VoIP logic
+    async function toggleVoipCall() { isCalling ? endCall() : await startCall(); }
     async function startCall() {
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -295,20 +425,24 @@
         localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
         peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
         peerConnection.onicecandidate = e => {
-          if (e.candidate && targetDriverSocketId) socket.emit('call:ice_candidate', { targetSocketId: targetDriverSocketId, candidate: e.candidate });
+          if (e.candidate && assignedDriverSocketId) {
+            socket.emit('call:ice_candidate', { targetSocketId: assignedDriverSocketId, candidate: e.candidate });
+          }
         };
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        socket.emit('call:initiate', { targetSocketId: targetDriverSocketId, offer });
+        socket.emit('call:initiate', { targetSocketId: assignedDriverSocketId, offer });
         isCalling = true;
-        document.getElementById('callBtn').innerText = '🔴 End Call';
-      } catch (err) { alert('Microphone permission required.'); }
+        document.getElementById('callDriverBtn').innerText = '🔴 End';
+      } catch (err) { alert('Microphone access needed for VoIP calling.'); }
     }
+
     socket.on('call:accepted', async ({ answer }) => {
       if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
     });
+
     socket.on('call:incoming', async ({ fromSocketId, offer }) => {
-      targetDriverSocketId = fromSocketId;
+      assignedDriverSocketId = fromSocketId;
       if (confirm('Incoming call from Driver. Accept?')) {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         peerConnection = new RTCPeerConnection(rtcConfig);
@@ -322,19 +456,22 @@
         await peerConnection.setLocalDescription(answer);
         socket.emit('call:accept', { targetSocketId: fromSocketId, answer });
         isCalling = true;
-        document.getElementById('callBtn').innerText = '🔴 End Call';
+        document.getElementById('callDriverBtn').innerText = '🔴 End';
       }
     });
+
     socket.on('call:ice_candidate', async ({ candidate }) => {
       if (peerConnection && candidate) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
     });
+
     socket.on('call:ended', () => endCall(false));
+
     function endCall(notify = true) {
-      if (notify && targetDriverSocketId) socket.emit('call:end', { targetSocketId: targetDriverSocketId });
+      if (notify && assignedDriverSocketId) socket.emit('call:end', { targetSocketId: assignedDriverSocketId });
       if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
       if (peerConnection) { peerConnection.close(); peerConnection = null; }
       isCalling = false;
-      document.getElementById('callBtn').innerText = '📞 Call Driver';
+      document.getElementById('callDriverBtn').innerText = '📞 Call';
     }
   </script>
 </body>
