@@ -1,0 +1,3 @@
+node_modules/
+velox.db
+.DS_Store

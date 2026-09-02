@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Velox Real-Time Dispatch Tester</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0b0f17;
+      color: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .panel {
+      background: #141c2b;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    h2 { margin: 0 0 8px; font-size: 18px; color: #10b981; }
+    button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-green { background: #10b981; color: #041f17; }
+    .btn-blue { background: #0284c7; color: #ffffff; }
+    .btn-amber { background: #f59e0b; color: #041f17; }
+    .log-box {
+      flex: 1;
+      height: 250px;
+      background: #070a0f;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-y: auto;
+      color: #94a3b8;
+    }
+    .status-tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      width: fit-content;
+    }
+    input {
+      background: #070a0f;
+      border: 1px solid #334155;
+      padding: 8px;
+      color: #fff;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h2>📱 Passenger Panel</h2>
+    <span id="custStatus" class="status-tag" style="background:#334155;">Idle</span>
+    
+    <button class="btn-green" onclick="requestRide()">1. Request Ride (Express Bypass)</button>
+
+    <div style="font-size: 13px;">
+      Start OTP: <strong id="otpDisplay" style="color:#10b981; font-size:16px;">----</strong>
+    </div>
+
+    <div class="log-box" id="custLog">-- Passenger events will show here --<br></div>
+  </div>
+
+  <div class="panel">
+    <h2>🛵 Driver Panel (Ramesh Rao)</h2>
+    <span id="driverStatus" class="status-tag" style="background:#334155;">Offline</span>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn-blue" onclick="driverOnline()">1. Go Online</button>
+      <button id="btnAccept" class="btn-amber" onclick="driverAccept()" disabled>2. Accept Ride</button>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+      <input id="inputOtp" type="text" placeholder="Enter 4-digit PIN" maxlength="4" style="width:120px;" />
+      <button class="btn-green" onclick="verifyPin()">3. Verify PIN & Start</button>
+    </div>
+
+    <button id="btnComplete" class="btn-blue" onclick="completeRide()" disabled style="margin-top:4px;">
+      4. Complete Ride
+    </button>
+
+    <div class="log-box" id="driverLog">-- Driver events will show here --<br></div>
+  </div>
+
+  <script>
+    // Connect both roles to our running backend
+    const socketCust = io('http://localhost:4000');
+    const socketDriver = io('http://localhost:4000');
+
+    let currentRideId = null;
+    let customerOtp = '';
+
+    function logCust(msg) {
+      document.getElementById('custLog').innerHTML += `> ${msg}<br>`;
+    }
+    function logDriver(msg) {
+      document.getElementById('driverLog').innerHTML += `> ${msg}<br>`;
+    }
+
+    // --- DRIVER ACTIONS ---
+    function driverOnline() {
+      socketDriver.emit('driver:online', {
+        driverId: 'drv_101',
+        name: 'Ramesh Rao',
+        vehiclePlate: 'TS 03 EQ 4812'
+      });
+      document.getElementById('driverStatus').innerText = 'Online (Waiting for rides)';
+      document.getElementById('driverStatus').style.background = '#10b981';
+      document.getElementById('driverStatus').style.color = '#041f17';
+      logDriver('Connected to server. Online status active.');
+    }
+
+    // --- PASSENGER ACTIONS ---
+    function requestRide() {
+      logCust('Sending ride request: Express Bypass (7.7 km)...');
+      socketCust.emit('ride:request', {
+        pickupAddress: 'Rahmath Nagar Main Rd, Kazipet',
+        dropAddress: '34, Reddy Colony, Hanamkonda',
+        selectedRouteName: 'Express Bypass',
+        distanceKm: 7.7,
+        driverPayout: 81
+      });
+    }
+
+    // --- SOCKET LISTENERS: CUSTOMER ---
+    socketCust.on('ride:created', (data) => {
+      currentRideId = data.rideId;
+      customerOtp = data.otp;
+      document.getElementById('otpDisplay').innerText = data.otp;
+      document.getElementById('custStatus').innerText = 'Searching for drivers...';
+      document.getElementById('custStatus').style.background = '#f59e0b';
+      logCust(`Ride registered with ID: ${data.rideId}`);
+      logCust(`Assigned Start PIN: ${data.otp}`);
+    });
+
+    socketCust.on('ride:matched', (data) => {
+      document.getElementById('custStatus').innerText = `Matched with ${data.driverName}`;
+      document.getElementById('custStatus').style.background = '#10b981';
+      document.getElementById('custStatus').style.color = '#041f17';
+      logCust(`Driver assigned! Name: ${data.driverName} (${data.vehiclePlate})`);
+    });
+
+    socketCust.on('ride:started', () => {
+      document.getElementById('custStatus').innerText = 'Trip In Progress';
+      logCust('Driver entered correct PIN. The trip has started!');
+    });
+
+    socketCust.on('ride:completed', () => {
+      document.getElementById('custStatus').innerText = 'Completed';
+      logCust('Trip completed successfully. Thank you for riding!');
+    });
+
+    // --- SOCKET LISTENERS: DRIVER ---
+    socketDriver.on('driver:incoming_alert', (order) => {
+      currentRideId = order.rideId;
+      document.getElementById('btnAccept').removeAttribute('disabled');
+      logDriver(`🚨 INCOMING ORDER: ${order.selectedRouteName}`);
+      logDriver(`Pickup: ${order.pickupAddress}`);
+      logDriver(`Guaranteed Payout: ₹${order.driverPayout}.00`);
+    });
+
+    function driverAccept() {
+      socketDriver.emit('driver:accept', {
+        rideId: currentRideId,
+        driverId: 'drv_101'
+      });
+    }
+
+    socketDriver.on('driver:accepted_success', () => {
+      document.getElementById('btnAccept').setAttribute('disabled', 'true');
+      document.getElementById('driverStatus').innerText = 'En route to pickup';
+      logDriver('Order accepted! Head to Rahmath Nagar Main Rd.');
+    });
+
+    function verifyPin() {
+      const pin = document.getElementById('inputOtp').value;
+      socketDriver.emit('driver:verify_otp', {
+        rideId: currentRideId,
+        inputOtp: pin
+      });
+    }
+
+    socketDriver.on('otp:result', (res) => {
+      if (res.success) {
+        logDriver('✅ PIN Verified successfully. Ride officially started.');
+        document.getElementById('driverStatus').innerText = 'Ride In Progress';
+        document.getElementById('btnComplete').removeAttribute('disabled');
+      } else {
+        logDriver('❌ Wrong PIN! Ask passenger for correct 4-digit code.');
+      }
+    });
+
+    function completeRide() {
+      socketDriver.emit('driver:complete', { rideId: currentRideId });
+    }
+
+    socketDriver.on('driver:completed_success', () => {
+      document.getElementById('driverStatus').innerText = 'Completed (Earnings: +₹81)';
+      document.getElementById('btnComplete').setAttribute('disabled', 'true');
+      logDriver('🎉 Trip finished. ₹81.00 added to daily wallet.');
+    });
+  </script>
+</body>
+</html>
