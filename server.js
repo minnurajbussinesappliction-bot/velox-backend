@@ -1,187 +1,214 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
+const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
-
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
+const io = new Server(server, {
+  cors: { origin: '*' }
+});
 
-const PORT = process.env.PORT || 4000;
+app.use(express.json());
+app.use(express.static(path.join(__dirname)));
 
-// SQLite database setup
-const db = new sqlite3.Database('./velox.db');
+// Direct file serving
+app.get('/driver', (req, res) => {
+  res.sendFile(path.join(__dirname, 'driver.html'));
+});
+
+app.get('/customer', (req, res) => {
+  res.sendFile(path.join(__dirname, 'customer.html'));
+});
+
+// Database setup
+const db = new sqlite3.Database(path.join(__dirname, 'velox.db'), (err) => {
+  if (err) console.error('Database connection error:', err);
+  else console.log('Connected to SQLite database.');
+});
+
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS rides (
-      id TEXT PRIMARY KEY,
-      pickup_address TEXT,
-      drop_address TEXT,
+      ride_id TEXT PRIMARY KEY,
+      driver_id TEXT,
+      customer_id TEXT,
       vehicle_type TEXT,
-      route_name TEXT,
-      distance_km REAL,
-      fare_grand_total REAL,
+      pickup TEXT,
+      drop_loc TEXT,
+      fare REAL,
       driver_payout REAL,
-      driver_name TEXT,
-      rating INTEGER DEFAULT 5,
-      tip_amount REAL DEFAULT 0,
+      platform_cut REAL,
       status TEXT,
-      completed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      otp TEXT,
+      rating INTEGER,
+      tip REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS drivers (
+      driver_id TEXT PRIMARY KEY,
+      name TEXT,
+      vehicle_plate TEXT,
+      total_trips INTEGER DEFAULT 0,
+      total_earnings REAL DEFAULT 0,
+      platform_cut REAL DEFAULT 0
+    )
+  `);
+
+  db.run(`
+    INSERT OR IGNORE INTO drivers (driver_id, name, vehicle_plate, total_trips, total_earnings, platform_cut)
+    VALUES ('drv_101', 'Ramesh Rao', 'TS 03 EQ 4812', 0, 0, 0)
   `);
 });
 
+// State containers
 const onlineDrivers = new Map();
 const activeRides = new Map();
-const dispatchTimers = new Map();
 
-// Driver Metrics API
-app.get('/api/driver/:id/metrics', (req, res) => {
-  db.all(
-    `SELECT COUNT(*) as total_trips, 
-            COALESCE(SUM(driver_payout + tip_amount), 0) as total_earnings,
-            COALESCE(SUM(fare_grand_total - driver_payout), 0) as platform_cut
-     FROM rides WHERE status = 'COMPLETED'`,
-    [],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows[0] || { total_trips: 0, total_earnings: 0, platform_cut: 0 });
-    }
-  );
+// REST APIs
+app.get('/api/driver/:driverId/metrics', (req, res) => {
+  const { driverId } = req.params;
+  db.get('SELECT * FROM drivers WHERE driver_id = ?', [driverId], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(row || { total_trips: 0, total_earnings: 0, platform_cut: 0 });
+  });
 });
 
-// Trip History API
 app.get('/api/rides/history', (req, res) => {
-  db.all('SELECT * FROM rides ORDER BY completed_at DESC', [], (err, rows) => {
+  db.all('SELECT * FROM rides ORDER BY created_at DESC LIMIT 10', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
+// Real-time Gateway
 io.on('connection', (socket) => {
   // Driver goes online
   socket.on('driver:online', (driverData) => {
-    onlineDrivers.set(driverData.driverId, { 
-      ...driverData, 
-      socketId: socket.id, 
-      status: 'AVAILABLE' 
+    onlineDrivers.set(driverData.driverId, {
+      ...driverData,
+      socketId: socket.id,
+      status: 'AVAILABLE'
     });
   });
 
-  // Relay note/message from passenger to driver
-  socket.on('msg:to_driver', ({ rideId, message }) => {
-    io.emit('msg:received_driver', { rideId, message });
-  });
+  // Customer requests ride
+  socket.on('ride:request', (data) => {
+    const rideId = data.rideId;
+    const grossFare = Number(data.fare) || 126;
+    const platformCut = Math.round(grossFare * 0.15);
+    const driverPayout = grossFare - platformCut;
+    const fixedOtp = '1234';
 
-  // Relay note/message from driver to customer
-  socket.on('msg:to_customer', ({ rideId, message }) => {
-    io.emit('msg:received_customer', { rideId, message });
-  });
-});
+    const routeCoordinates = [
+      data.pickup,
+      [17.9850, 79.5300],
+      [17.9940, 79.5420],
+      [18.0050, 79.5510],
+      data.drop
+    ];
 
-  socket.on('ride:request', (payload) => {
-    const rideId = `ride_${Date.now()}`;
-    const otp = "1234"; // Fixed PIN for testing
-
-    const rideData = {
-      ...payload,
+    const rideRecord = {
       rideId,
-      startOtp: otp,
-      status: 'SEARCHING',
-      customerSocketId: socket.id
+      customerSocketId: socket.id,
+      pickup: data.pickup,
+      drop: data.drop,
+      vehicleType: data.vehicleType,
+      fare: grossFare,
+      driverPayout,
+      platformCut,
+      otp: fixedOtp,
+      path: routeCoordinates,
+      selectedRouteName: data.selectedRouteName,
+      distanceKm: data.distanceKm,
+      status: 'SEARCHING'
     };
 
-    activeRides.set(rideId, rideData);
-    socket.emit('ride:created', { rideId, otp });
+    activeRides.set(rideId, rideRecord);
 
-    onlineDrivers.forEach((driver) => {
-      if (driver.status === 'AVAILABLE') {
-        io.to(driver.socketId).emit('driver:incoming_alert', {
+    db.run(
+      `INSERT INTO rides (ride_id, customer_id, vehicle_type, pickup, drop_loc, fare, driver_payout, platform_cut, status, otp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        rideId,
+        socket.id,
+        data.vehicleType,
+        JSON.stringify(data.pickup),
+        JSON.stringify(data.drop),
+        grossFare,
+        driverPayout,
+        platformCut,
+        'SEARCHING',
+        fixedOtp
+      ]
+    );
+
+    // Broadcast to available online drivers
+    for (const [drvId, drv] of onlineDrivers.entries()) {
+      if (drv.status === 'AVAILABLE') {
+        io.to(drv.socketId).emit('driver:incoming_alert', {
           rideId,
-          pickupAddress: payload.pickupAddress,
-          dropAddress: payload.dropAddress,
-          vehicleType: payload.vehicleType,
-          selectedRouteName: payload.selectedRouteName,
-          distanceKm: payload.distanceKm,
-          driverPayout: payload.driverPayout,
-          path: payload.path,
-          timeoutSeconds: 15
+          fare: grossFare,
+          driverPayout,
+          vehicleType: data.vehicleType,
+          selectedRouteName: data.selectedRouteName,
+          distanceKm: data.distanceKm,
+          path: routeCoordinates
         });
       }
-    });
-
-    const timer = setTimeout(() => {
-      const ride = activeRides.get(rideId);
-      if (ride && ride.status === 'SEARCHING') {
-        io.to(ride.customerSocketId).emit('ride:timeout', {
-          message: 'No driver accepted within the window. Tap to search again.'
-        });
-        onlineDrivers.forEach((drv) => {
-          io.to(drv.socketId).emit('driver:alert_revoked', { rideId });
-        });
-        activeRides.delete(rideId);
-      }
-      dispatchTimers.delete(rideId);
-    }, 15000);
-
-    dispatchTimers.set(rideId, timer);
+    }
   });
 
+  // Driver accepts ride
   socket.on('driver:accept', ({ rideId, driverId }) => {
     const ride = activeRides.get(rideId);
-    if (!ride || ride.status !== 'SEARCHING') {
-      socket.emit('driver:accept_failed', { message: 'Ride expired or already assigned.' });
-      return;
-    }
-
-    if (dispatchTimers.has(rideId)) {
-      clearTimeout(dispatchTimers.get(rideId));
-      dispatchTimers.delete(rideId);
-    }
-
-    ride.status = 'ASSIGNED';
-    ride.driverId = driverId;
-    ride.driverSocketId = socket.id;
-
     const driver = onlineDrivers.get(driverId);
-    if (driver) driver.status = 'BUSY';
 
-    onlineDrivers.forEach((drv) => {
-      if (drv.driverId !== driverId) {
-        io.to(drv.socketId).emit('driver:alert_revoked', { rideId });
-      }
-    });
+    if (ride && ride.status === 'SEARCHING') {
+      ride.status = 'ASSIGNED';
+      ride.driverId = driverId;
+      ride.driverSocketId = socket.id;
 
-    io.to(ride.customerSocketId).emit('ride:matched', {
-      rideId,
-      driverName: driver ? driver.name : 'Ramesh Rao',
-      vehiclePlate: driver ? driver.vehiclePlate : 'TS 03 EQ 4812',
-      driverSocketId: socket.id
-    });
+      if (driver) driver.status = 'ON_TRIP';
 
-    socket.emit('driver:accepted_success', {
-      rideId,
-      customerSocketId: ride.customerSocketId,
-      path: ride.path,
-      selectedRouteName: ride.selectedRouteName
-    });
+      db.run('UPDATE rides SET status = ?, driver_id = ? WHERE ride_id = ?', ['ASSIGNED', driverId, rideId]);
+
+      // Confirm to accepting driver
+      socket.emit('driver:accepted_success', {
+        rideId,
+        customerSocketId: ride.customerSocketId
+      });
+
+      // Notify customer
+      io.to(ride.customerSocketId).emit('ride:assigned', {
+        driverSocketId: socket.id,
+        name: driver ? driver.name : 'Ramesh Rao',
+        vehiclePlate: driver ? driver.vehiclePlate : 'TS 03 EQ 4812'
+      });
+
+      // Revoke from other drivers
+      socket.broadcast.emit('driver:alert_revoked', { rideId });
+    } else {
+      socket.emit('driver:accept_failed', { message: 'Ride already accepted or canceled.' });
+    }
   });
 
+  // Driver declines ride
   socket.on('driver:decline', ({ rideId }) => {
-    socket.emit('driver:alert_revoked', { rideId });
+    // Left available for future redispatch queue logic
   });
 
+  // OTP Verification
   socket.on('driver:verify_otp', ({ rideId, inputOtp }) => {
     const ride = activeRides.get(rideId);
-    if (!ride) return;
+    if (ride && ride.otp === inputOtp) {
+      ride.status = 'IN_PROGRESS';
+      db.run('UPDATE rides SET status = ? WHERE ride_id = ?', ['IN_PROGRESS', rideId]);
 
-    if (ride.startOtp === inputOtp.trim()) {
-      ride.status = 'STARTED';
       socket.emit('otp:result', { success: true });
       io.to(ride.customerSocketId).emit('ride:started');
     } else {
@@ -189,84 +216,89 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('ride:telemetry', ({ rideId, lat, lng, progress }) => {
-    const ride = activeRides.get(rideId);
+  // Telemetry stream
+  socket.on('ride:telemetry', (data) => {
+    const ride = activeRides.get(data.rideId);
     if (ride) {
-      io.to(ride.customerSocketId).emit('ride:track_step', { lat, lng, progress });
+      io.to(ride.customerSocketId).emit('ride:telemetry_update', data);
     }
   });
 
+  // Trip Completion
   socket.on('driver:complete', ({ rideId }) => {
     const ride = activeRides.get(rideId);
-    if (!ride) return;
+    if (ride) {
+      ride.status = 'COMPLETED';
+      db.run('UPDATE rides SET status = ? WHERE ride_id = ?', ['COMPLETED', rideId]);
 
-    const driver = onlineDrivers.get(ride.driverId);
-    if (driver) driver.status = 'AVAILABLE';
-    const driverName = driver ? driver.name : 'Ramesh Rao';
+      db.run(
+        `UPDATE drivers 
+         SET total_trips = total_trips + 1, 
+             total_earnings = total_earnings + ?, 
+             platform_cut = platform_cut + ? 
+         WHERE driver_id = ?`,
+        [ride.driverPayout, ride.platformCut, ride.driverId]
+      );
 
-    db.run(
-      `INSERT INTO rides (id, pickup_address, drop_address, vehicle_type, route_name, distance_km, fare_grand_total, driver_payout, driver_name, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        ride.rideId,
-        ride.pickupAddress,
-        ride.dropAddress,
-        ride.vehicleType || 'Bike',
-        ride.selectedRouteName,
-        ride.distanceKm,
-        ride.grandTotal,
-        ride.driverPayout,
-        driverName,
-        'COMPLETED'
-      ]
-    );
+      const driver = onlineDrivers.get(ride.driverId);
+      if (driver) driver.status = 'AVAILABLE';
 
-    io.to(ride.customerSocketId).emit('ride:completed', { rideId: ride.rideId });
-    socket.emit('driver:completed_success');
+      io.to(ride.customerSocketId).emit('ride:completed_client');
+      socket.emit('driver:refresh_metrics');
+    }
   });
 
-  // Rider submits review & optional tip
-  socket.on('ride:submit_feedback', ({ rideId, rating, tip }) => {
-    const tipVal = Number(tip) || 0;
-    const ratingVal = Number(rating) || 5;
+  // Rating & Tip
+  socket.on('customer:rate_and_tip', ({ rideId, rating, tip }) => {
+    const numericTip = Number(tip) || 0;
+    db.run('UPDATE rides SET rating = ?, tip = ? WHERE ride_id = ?', [rating, numericTip, rideId]);
 
-    db.run(
-      `UPDATE rides SET rating = ?, tip_amount = ? WHERE id = ?`,
-      [ratingVal, tipVal, rideId],
-      (err) => {
-        if (!err) {
-          activeRides.delete(rideId);
-          // Broadcast metric refresh to drivers
-          io.emit('driver:refresh_metrics');
-        }
+    const ride = activeRides.get(rideId);
+    if (ride && numericTip > 0) {
+      db.run('UPDATE drivers SET total_earnings = total_earnings + ? WHERE driver_id = ?', [numericTip, ride.driverId]);
+      if (ride.driverSocketId) {
+        io.to(ride.driverSocketId).emit('driver:refresh_metrics');
       }
-    );
+    }
   });
 
-  // WebRTC Signaling
+  // Two-way messaging
+  socket.on('msg:to_driver', ({ rideId, message }) => {
+    io.emit('msg:received_driver', { rideId, message });
+  });
+
+  socket.on('msg:to_customer', ({ rideId, message }) => {
+    io.emit('msg:received_customer', { rideId, message });
+  });
+
+  // WebRTC VoIP Signaling
   socket.on('call:initiate', ({ targetSocketId, offer }) => {
     io.to(targetSocketId).emit('call:incoming', { fromSocketId: socket.id, offer });
   });
+
   socket.on('call:accept', ({ targetSocketId, answer }) => {
-    io.to(targetSocketId).emit('call:accepted', { fromSocketId: socket.id, answer });
+    io.to(targetSocketId).emit('call:accepted', { answer });
   });
+
   socket.on('call:ice_candidate', ({ targetSocketId, candidate }) => {
     io.to(targetSocketId).emit('call:ice_candidate', { candidate });
   });
+
   socket.on('call:end', ({ targetSocketId }) => {
     io.to(targetSocketId).emit('call:ended');
   });
 
   socket.on('disconnect', () => {
-    for (const [driverId, driver] of onlineDrivers.entries()) {
+    for (const [id, driver] of onlineDrivers.entries()) {
       if (driver.socketId === socket.id) {
-        onlineDrivers.delete(driverId);
+        onlineDrivers.delete(id);
         break;
       }
     }
   });
 });
 
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Velox backend running on port ${PORT}`);
 });
