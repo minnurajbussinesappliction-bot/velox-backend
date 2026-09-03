@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Velox Ride</title>
 
-  <!-- Leaflet & Socket.io CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -26,7 +25,7 @@
       border: 1px solid #161b22;
     }
 
-    /* Top Floating Navigation Header */
+    /* Top Navigation Header */
     .top-header {
       position: absolute;
       top: 14px;
@@ -78,7 +77,7 @@
     .inputs-wrap { flex: 1; display: flex; flex-direction: column; gap: 8px; }
     .loc-field { font-size: 13px; font-weight: 600; color: #f8fafc; background: transparent; border: none; outline: none; width: 100%; }
 
-    /* Dark Map Viewport */
+    /* Dark Map */
     #map { width: 100%; height: 50vh; min-height: 300px; background: #0b0f17; z-index: 1; }
 
     /* Bottom Sheet */
@@ -97,7 +96,7 @@
       box-shadow: 0 -12px 30px rgba(0,0,0,0.7);
     }
 
-    /* Screen 1: Ride Orb Carousel */
+    /* Screen 1: Ride Orb Layout */
     .orb-carousel {
       width: 100%;
       display: flex;
@@ -173,7 +172,7 @@
       gap: 8px;
     }
 
-    /* Screen 2: Metrics Bar */
+    /* Screen 2: Metrics Strip */
     .metrics-bar {
       width: 100%;
       display: grid;
@@ -205,7 +204,7 @@
     .sel-sub { font-size: 11px; color: #64748b; }
     .sel-seats { background: #1c2636; padding: 4px 8px; border-radius: 8px; font-size: 12px; color: #94a3b8; font-weight: 700; }
 
-    /* ACTION BAR WITH PAYMENT DROPDOWN & BRAND / NOTE TO DRIVER */
+    /* Action Tiles */
     .custom-action-row {
       width: 100%;
       display: grid;
@@ -243,7 +242,6 @@
       border-radius: 4px;
     }
 
-    /* Hidden Dropdown Options Menu */
     .payment-dropdown-menu {
       position: absolute;
       bottom: 50px;
@@ -267,7 +265,6 @@
     }
     .pay-option:hover { background: #22c55e; color: #04220e; }
 
-    /* Note Modal */
     .note-modal {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -287,7 +284,6 @@
 
   <div class="app-screen">
     
-    <!-- Top Header Overlay -->
     <div class="top-header">
       <div class="back-btn-row">
         <div class="icon-circle-btn" onclick="toggleScreen()">←</div>
@@ -295,7 +291,6 @@
         <div class="icon-circle-btn">⋯</div>
       </div>
 
-      <!-- Address Input Box -->
       <div class="address-card">
         <div class="route-dots">
           <div class="dot-green"></div>
@@ -310,10 +305,8 @@
       </div>
     </div>
 
-    <!-- Map Canvas -->
     <div id="map"></div>
 
-    <!-- Screen 1: Ride Orb Layout -->
     <div id="orbSheet" class="sheet-card">
       <div class="orb-carousel">
         <div class="orb-item" onclick="pickTier('Cab', 180, '14 min', this)">
@@ -340,10 +333,8 @@
       </button>
     </div>
 
-    <!-- Screen 2: Trip Preview -->
     <div id="previewSheet" class="sheet-card" style="display:none;">
       
-      <!-- Metrics Strip -->
       <div class="metrics-bar">
         <div>
           <div class="metric-val" id="prevEta">12 min</div>
@@ -359,7 +350,6 @@
         </div>
       </div>
 
-      <!-- Selected Vehicle Row -->
       <div class="selected-ride-row">
         <div class="sel-left">
           <div class="sel-icon" id="prevIcon">🛺</div>
@@ -371,9 +361,7 @@
         <div class="sel-seats">👤 3</div>
       </div>
 
-      <!-- PAYMENT DROPDOWN & BRAND + NOTE TO DRIVER -->
       <div class="custom-action-row">
-        <!-- 1. Drop Button at Cash to Select Mode -->
         <div class="select-dropdown-tile" onclick="togglePaymentMenu()">
           <div style="display:flex; align-items:center; gap:8px;">
             <span id="currentPayIcon">💵</span>
@@ -388,7 +376,6 @@
           </div>
         </div>
 
-        <!-- 2. Brand Name & Note to Driver -->
         <div class="brand-note-tile" onclick="openNoteModal()">
           <div style="display:flex; align-items:center; gap:6px;">
             <span class="brand-pill">VELOX</span>
@@ -398,13 +385,11 @@
         </div>
       </div>
 
-      <!-- Confirm Booking Button -->
       <button class="cta-btn-green" id="confirmBookBtn" onclick="dispatchRide()">
         <span>Confirm & Book</span>
         <span>→</span>
       </button>
 
-      <!-- Assigned Driver Status -->
       <div id="activeMatchAlert" style="display:none; width:100%; margin-top:10px; background:#141c28; border:1px solid #22c55e; border-radius:12px; padding:10px; text-align:center;">
         <div style="font-size:11px; color:#22c55e; font-weight:800;">DRIVER EN ROUTE</div>
         <div style="font-size:14px; font-weight:800; margin:3px 0;">Ramesh Rao (TS 03 EQ 4812)</div>
@@ -414,7 +399,6 @@
 
   </div>
 
-  <!-- Note to Driver Modal -->
   <div class="note-modal" id="noteModal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <span style="font-size:13px; font-weight:800;">Send Note / Pickup Instruction</span>
@@ -476,7 +460,6 @@
       }
     }
 
-    // Payment Dropdown Logic
     function togglePaymentMenu() {
       const menu = document.getElementById('paymentDropdown');
       menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
@@ -488,7 +471,6 @@
       document.getElementById('paymentDropdown').style.display = 'none';
     }
 
-    // Note to Driver Logic
     function openNoteModal() { document.getElementById('noteModal').style.display = 'flex'; }
     function closeNoteModal() { document.getElementById('noteModal').style.display = 'none'; }
 
@@ -504,7 +486,6 @@
       alert(`Driver sent you a message: ${message}`);
     });
 
-    // Booking Dispatch
     function dispatchRide() {
       activeRideId = 'ride_' + Date.now();
       document.getElementById('confirmBookBtn').innerText = 'Finding Nearby Driver...';

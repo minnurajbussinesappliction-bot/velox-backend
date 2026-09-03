@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Velox Driver</title>
 
-  <!-- Leaflet & Socket.io CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -26,7 +25,7 @@
       border: 1px solid #1c2431;
     }
 
-    /* Top Driver Header */
+    /* Driver Header */
     .driver-header {
       padding: 16px 18px 12px;
       display: flex;
@@ -143,7 +142,7 @@
     .tool-btn span { font-size: 18px; }
     .tool-btn div { font-size: 10px; color: #94a3b8; font-weight: 600; }
 
-    /* Big Green Go Online Button */
+    /* Go Online Button */
     .go-online-btn {
       margin: 0 16px 10px;
       background: #22c55e;
@@ -174,7 +173,7 @@
     .nav-item { color: #64748b; font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
     .nav-item.active { color: #22c55e; }
 
-    /* SCREEN 2: ACTIVE RIDE / ON TRIP OVERLAY */
+    /* SCREEN 2: ACTIVE RIDE VIEW */
     #activeRideView {
       display: none;
       flex-direction: column;
@@ -199,7 +198,6 @@
       border-radius: 50%;
     }
 
-    /* Route Overview Card */
     .trip-route-card {
       margin: 0 16px 10px;
       background: #141c28;
@@ -226,7 +224,6 @@
       cursor: pointer;
     }
 
-    /* Customer Info & Message / Call Bar */
     .customer-card {
       margin: 10px 16px;
       background: #141c28;
@@ -242,7 +239,6 @@
     .action-icons { display: flex; gap: 10px; }
     .round-action-btn { width: 40px; height: 40px; border-radius: 50%; background: #1c2636; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
 
-    /* Cash to Collect Bar */
     .cash-collect-bar {
       margin: 0 16px 12px;
       background: #141c28;
@@ -255,7 +251,6 @@
       font-weight: 700;
     }
 
-    /* Complete Trip Button Slider */
     .complete-trip-btn {
       margin: 0 16px 20px;
       background: #22c55e;
@@ -272,7 +267,6 @@
       cursor: pointer;
     }
 
-    /* Modal for Customer Messages / Notes */
     .chat-modal {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -302,7 +296,6 @@
 
   <div class="app-screen">
     
-    <!-- DRIVER APP - HOME -->
     <div id="homeView">
       <div class="driver-header">
         <div class="user-info">
@@ -318,7 +311,6 @@
         </div>
       </div>
 
-      <!-- Online/Offline Switch -->
       <div class="toggle-card">
         <div>
           <div class="toggle-title" id="statusTitle">You're Offline</div>
@@ -330,7 +322,6 @@
         </label>
       </div>
 
-      <!-- Map with demand tag -->
       <div class="map-container">
         <div class="map-chip">
           <div class="demand-tag">● High demand</div>
@@ -339,7 +330,6 @@
         <div id="driverMap"></div>
       </div>
 
-      <!-- Earnings Overview -->
       <div class="section-head">
         <span>Earnings Overview</span>
         <span style="color:#64748b; cursor:pointer;">Today ›</span>
@@ -363,7 +353,6 @@
         </div>
       </div>
 
-      <!-- Top Driver Banner -->
       <div class="banner-card">
         <span style="font-size:24px;">🏆</span>
         <div>
@@ -372,7 +361,6 @@
         </div>
       </div>
 
-      <!-- Your Tools -->
       <div class="section-head" style="margin-top:12px; margin-bottom:6px;">Your Tools</div>
       <div class="tools-grid">
         <div class="tool-btn"><span>👛</span><div>Earnings</div></div>
@@ -382,13 +370,11 @@
         <div class="tool-btn"><span>⋯</span><div>More</div></div>
       </div>
 
-      <!-- Go Online Button -->
       <button class="go-online-btn" id="goOnlineMainBtn" onclick="toggleDuty(true)">
         <span>Go Online</span>
         <span>⏻</span>
       </button>
 
-      <!-- Bottom Nav -->
       <div class="bottom-nav">
         <div class="nav-item active"><span>🏠</span>Home</div>
         <div class="nav-item"><span>📅</span>Rides</div>
@@ -397,7 +383,6 @@
       </div>
     </div>
 
-    <!-- 2. ACTIVE RIDE / ON TRIP VIEW -->
     <div id="activeRideView">
       <div class="trip-top-nav">
         <span style="font-size:18px; cursor:pointer;" onclick="closeTripView()">⌄</span>
@@ -405,7 +390,6 @@
         <span class="sos-badge">SOS</span>
       </div>
 
-      <!-- Route steps card -->
       <div class="trip-route-card">
         <div class="route-steps">
           <div class="step-item">
@@ -420,12 +404,10 @@
         <div class="nav-launch-btn">▲ Navigate</div>
       </div>
 
-      <!-- Active Tracking Map -->
       <div style="flex:1; margin:0 16px; border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
         <div id="tripMap" style="width:100%; height:100%; min-height:220px;"></div>
       </div>
 
-      <!-- Distance & ETA Metric Strip -->
       <div class="stats-strip" style="margin-top:10px;">
         <div>
           <div class="stat-val">12 min</div>
@@ -441,7 +423,6 @@
         </div>
       </div>
 
-      <!-- Customer Detail Strip -->
       <div class="customer-card">
         <div class="cust-meta">
           <div class="cust-avatar">👨</div>
@@ -456,13 +437,11 @@
         </div>
       </div>
 
-      <!-- Cash to Collect -->
       <div class="cash-collect-bar">
         <span style="color:#94a3b8;">Cash to collect</span>
         <span style="color:#4ade80; font-size:18px;" id="cashCollectVal">₹126</span>
       </div>
 
-      <!-- Complete Trip Action -->
       <button class="complete-trip-btn" onclick="completeCurrentTrip()">
         <span>Complete Trip</span>
         <span>→</span>
@@ -471,7 +450,6 @@
 
   </div>
 
-  <!-- Note to Customer Modal -->
   <div class="chat-modal" id="chatModal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <span style="font-size:13px; font-weight:800;">Note to Customer</span>
@@ -530,7 +508,6 @@
       }
     }
 
-    // Trip Dispatch Trigger
     socket.on('driver:incoming_alert', (order) => {
       activeRideId = order.rideId;
       if (confirm(`New Ride Request! Fare: ₹${order.fare}. Accept?`)) {
@@ -577,7 +554,6 @@
       if (homeMap) homeMap.invalidateSize();
     }
 
-    // Messaging / Notes logic
     function openChat() { document.getElementById('chatModal').style.display = 'flex'; }
     function closeChat() { document.getElementById('chatModal').style.display = 'none'; }
 
@@ -596,7 +572,6 @@
       alert(`New message from Rider: ${message}`);
     });
 
-    // VoIP Call Support
     async function toggleCall() { isCalling ? endCall() : await startCall(); }
     async function startCall() {
       try {
