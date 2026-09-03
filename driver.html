@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Velox Partner</title>
+  <title>Velox Driver</title>
 
-  <!-- Leaflet CDN -->
+  <!-- Leaflet & Socket.io CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Socket.io CDN -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
@@ -19,315 +18,283 @@
       width: 100%;
       max-width: 420px;
       min-height: 100vh;
-      background: #090c10;
+      background: #0d1219;
       display: flex;
       flex-direction: column;
       position: relative;
       overflow-x: hidden;
-      border: 1px solid #161b22;
+      border: 1px solid #1c2431;
     }
 
-    /* Top Floating Navigation Header */
-    .top-header {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .back-btn-row {
+    /* Top Driver Header */
+    .driver-header {
+      padding: 16px 18px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 4px;
     }
-    .icon-circle-btn {
-      width: 38px;
-      height: 38px;
-      background: rgba(18, 23, 31, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      color: #fff;
-      cursor: pointer;
-    }
-    .duty-badge {
-      background: #1e293b;
-      color: #94a3b8;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    .user-info { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; background: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid #3b82f6; }
+    .greeting { font-size: 16px; font-weight: 800; }
+    .sub-greeting { font-size: 12px; color: #94a3b8; }
+    .bell-icon { width: 38px; height: 38px; border-radius: 50%; background: #16202c; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+    .badge-count { position: absolute; top: 4px; right: 4px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-    /* Route Address Card */
-    .address-card {
-      background: rgba(18, 23, 31, 0.92);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Offline/Online Toggle Card */
+    .toggle-card {
+      margin: 0 16px 12px;
+      background: #141c28;
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .toggle-title { font-size: 15px; font-weight: 800; }
+    .toggle-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+    
+    .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: #22c55e; }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Driver Map Section */
+    .map-container {
+      margin: 0 16px;
+      height: 180px;
       border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    #driverMap { width: 100%; height: 100%; background: #0b0f17; }
+    
+    .map-chip {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: 11px;
+      z-index: 500;
+    }
+    .demand-tag { color: #22c55e; font-weight: 800; }
+
+    /* Earnings Overview Strip */
+    .section-head {
+      margin: 14px 16px 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+    .stats-strip {
+      margin: 0 16px;
+      background: #141c28;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 14px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      text-align: center;
+    }
+    .stat-box { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .stat-val { font-size: 18px; font-weight: 800; color: #fff; }
+    .stat-label { font-size: 11px; color: #64748b; }
+
+    /* Top Driver Banner */
+    .banner-card {
+      margin: 10px 16px 0;
+      background: linear-gradient(90deg, #11291f 0%, #131d27 100%);
+      border: 1px solid #166534;
+      border-radius: 14px;
       padding: 12px 14px;
       display: flex;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-    .route-dots {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-    .dot-green { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid #22c55e; background: transparent; }
-    .dot-line { width: 1.5px; height: 18px; border-left: 1.5px dashed #475569; }
-    .dot-red { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid #ef4444; background: transparent; }
-    .inputs-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .loc-field {
-      font-size: 13px;
-      font-weight: 600;
-      color: #f8fafc;
-    }
-    .loc-sub {
-      font-size: 11px;
-      color: #64748b;
-    }
-
-    /* Dark Map Viewport */
-    #driverMap {
-      width: 100%;
-      height: 52vh;
-      min-height: 320px;
-      background: #0b0f17;
-      z-index: 1;
-    }
-
-    /* Bottom Modal / Sheet */
-    .sheet-card {
-      flex: 1;
-      background: #0e131b;
-      border-top-left-radius: 26px;
-      border-top-right-radius: 26px;
-      margin-top: -24px;
-      z-index: 500;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding: 18px 16px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-shadow: 0 -12px 30px rgba(0,0,0,0.7);
-    }
-
-    /* Ride Orb Layout */
-    .orb-carousel {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      margin-top: 4px;
-    }
-    .orb-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-      opacity: 0.5;
-      transform: scale(0.88);
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .orb-circle {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: #161e2b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 34px;
-    }
-    .orb-label {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #94a3b8;
-      margin-top: 6px;
-      text-transform: uppercase;
-    }
-    
-    /* Center Active Orb */
-    .orb-item.active {
-      opacity: 1;
-      transform: scale(1.08);
-    }
-    .orb-item.active .orb-circle {
-      width: 86px;
-      height: 86px;
-      background: radial-gradient(circle, #252312 20%, #151a24 90%);
-      border: 2px solid #facc15;
-      box-shadow: 0 0 28px rgba(250, 204, 21, 0.45);
-    }
-    .orb-item.active .orb-label {
-      color: #ffffff;
-    }
-    .orb-eta {
-      font-size: 12px;
-      color: #facc15;
-      font-weight: 700;
-      margin-top: 10px;
-    }
-
-    /* Payout / Earnings Display */
-    .fare-price {
-      font-size: 36px;
-      font-weight: 900;
-      color: #ffffff;
-      margin-top: 8px;
-      letter-spacing: -0.5px;
-    }
-    .fare-subtitle {
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 2px;
-      margin-bottom: 14px;
-    }
-
-    /* CTA Buttons */
-    .cta-btn-yellow {
-      width: 100%;
-      background: #facc15;
-      color: #000000;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 18px rgba(250, 204, 21, 0.3);
-    }
-    .cta-btn-green {
-      width: 100%;
-      background: #4ade80;
-      color: #04220e;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 18px rgba(74, 222, 128, 0.3);
-    }
-    .cta-btn-red {
-      background: #ef4444;
-      color: #fff;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
-      font-size: 15px;
-      font-weight: 800;
       cursor: pointer;
     }
 
-    /* Metrics Grid */
-    .metrics-bar {
-      width: 100%;
+    /* Tools Grid */
+    .tools-grid {
+      margin: 12px 16px;
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      background: #141c28;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 10px 0;
-      margin-top: 14px;
-      text-align: center;
-    }
-    .metric-val { font-size: 16px; font-weight: 800; color: #fff; }
-    .metric-lbl { font-size: 11px; color: #64748b; margin-top: 2px; }
-
-    /* Action Tiles */
-    .action-grid {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
-      margin-top: 14px;
     }
-    .action-tile {
+    .tool-btn {
       background: #141c28;
       border: 1px solid rgba(255,255,255,0.06);
       border-radius: 12px;
-      padding: 8px 4px;
+      padding: 10px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       cursor: pointer;
     }
-    .action-tile span { font-size: 16px; }
-    .action-tile div { font-size: 10px; color: #94a3b8; font-weight: 600; }
+    .tool-btn span { font-size: 18px; }
+    .tool-btn div { font-size: 10px; color: #94a3b8; font-weight: 600; }
 
-    /* Overlay Cards for Trip Order / Verification */
-    .status-overlay {
-      width: 100%;
+    /* Big Green Go Online Button */
+    .go-online-btn {
+      margin: 0 16px 10px;
+      background: #22c55e;
+      color: #04220e;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      margin-top: auto;
+      background: #090c10;
+      border-top: 1px solid #1c2431;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 10px 0;
+      text-align: center;
+    }
+    .nav-item { color: #64748b; font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+    .nav-item.active { color: #22c55e; }
+
+    /* SCREEN 2: ACTIVE RIDE / ON TRIP OVERLAY */
+    #activeRideView {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      background: #0d1219;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 2000;
+    }
+    .trip-top-nav {
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sos-badge {
+      background: #ef4444;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px 8px;
+      border-radius: 50%;
+    }
+
+    /* Route Overview Card */
+    .trip-route-card {
+      margin: 0 16px 10px;
       background: #141c28;
       border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border: 1px solid rgba(255,255,255,0.08);
-      padding: 14px;
-      margin-bottom: 12px;
+    }
+    .route-steps { display: flex; flex-direction: column; gap: 8px; }
+    .step-item { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; }
+    .nav-launch-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    /* Customer Info & Message / Call Bar */
+    .customer-card {
+      margin: 10px 16px;
+      background: #141c28;
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .cust-meta { display: flex; align-items: center; gap: 10px; }
+    .cust-avatar { width: 42px; height: 42px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .action-icons { display: flex; gap: 10px; }
+    .round-action-btn { width: 40px; height: 40px; border-radius: 50%; background: #1c2636; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+
+    /* Cash to Collect Bar */
+    .cash-collect-bar {
+      margin: 0 16px 12px;
+      background: #141c28;
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Complete Trip Button Slider */
+    .complete-trip-btn {
+      margin: 0 16px 20px;
+      background: #22c55e;
+      color: #04220e;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    /* Modal for Customer Messages / Notes */
+    .chat-modal {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #141c28;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 18px;
+      border-top: 1px solid rgba(255,255,255,0.1);
       display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 3000;
     }
-    .timer-bar {
-      width: 100%;
-      height: 4px;
-      background: #334155;
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-    .timer-fill {
-      height: 100%;
-      background: #facc15;
-      width: 100%;
-      transition: width 1s linear;
-    }
-    .pin-input {
+    .chat-input {
       width: 100%;
       padding: 12px;
       background: #090c10;
       border: 1px solid #334155;
       border-radius: 10px;
       color: #fff;
-      font-size: 20px;
-      text-align: center;
-      letter-spacing: 6px;
-      font-weight: 800;
-      margin: 8px 0;
+      font-size: 14px;
+      outline: none;
     }
   </style>
 </head>
@@ -335,295 +302,302 @@
 
   <div class="app-screen">
     
-    <!-- Top Header Overlay -->
-    <div class="top-header">
-      <div class="back-btn-row">
-        <div class="icon-circle-btn">←</div>
-        <span id="dutyTag" class="duty-badge">Offline</span>
-        <div class="icon-circle-btn">⋯</div>
-      </div>
-
-      <!-- Address Input Box -->
-      <div class="address-card">
-        <div class="route-dots">
-          <div class="dot-green"></div>
-          <div class="dot-line"></div>
-          <div class="dot-red"></div>
-        </div>
-        <div class="inputs-wrap">
+    <!-- DRIVER APP - HOME -->
+    <div id="homeView">
+      <div class="driver-header">
+        <div class="user-info">
+          <div class="avatar">👨‍✈️</div>
           <div>
-            <div class="loc-field" id="pickupTxt">Hanamkonda, Telangana</div>
-            <div class="loc-sub">Pickup Location</div>
-          </div>
-          <div style="margin-top: 4px;">
-            <div class="loc-field" id="dropTxt">Reddy Colony, Hanamkonda</div>
-            <div class="loc-sub">Drop Destination</div>
+            <div class="greeting">Hi, Ramesh 👋</div>
+            <div class="sub-greeting">Good Morning</div>
           </div>
         </div>
-        <div style="color: #64748b; font-size: 18px;">⇅</div>
+        <div class="bell-icon">
+          <span>🔔</span>
+          <div class="badge-count">2</div>
+        </div>
+      </div>
+
+      <!-- Online/Offline Switch -->
+      <div class="toggle-card">
+        <div>
+          <div class="toggle-title" id="statusTitle">You're Offline</div>
+          <div class="toggle-sub" id="statusDesc">Go online to start accepting trips</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="dutyToggle" onchange="toggleDuty(this.checked)" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Map with demand tag -->
+      <div class="map-container">
+        <div class="map-chip">
+          <div class="demand-tag">● High demand</div>
+          <div style="font-size:10px; color:#cbd5e1;">Reddy Colony, Hanamkonda</div>
+        </div>
+        <div id="driverMap"></div>
+      </div>
+
+      <!-- Earnings Overview -->
+      <div class="section-head">
+        <span>Earnings Overview</span>
+        <span style="color:#64748b; cursor:pointer;">Today ›</span>
+      </div>
+
+      <div class="stats-strip">
+        <div class="stat-box">
+          <span style="font-size:18px;">💵</span>
+          <div class="stat-val" id="statEarnings">₹1,260</div>
+          <div class="stat-label">Earnings</div>
+        </div>
+        <div class="stat-box" style="border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06);">
+          <span style="font-size:18px;">🚙</span>
+          <div class="stat-val" id="statTrips">12</div>
+          <div class="stat-label">Trips</div>
+        </div>
+        <div class="stat-box">
+          <span style="font-size:18px; color:#facc15;">⭐</span>
+          <div class="stat-val">4.9</div>
+          <div class="stat-label">Rating</div>
+        </div>
+      </div>
+
+      <!-- Top Driver Banner -->
+      <div class="banner-card">
+        <span style="font-size:24px;">🏆</span>
+        <div>
+          <div style="font-size:13px; font-weight:800; color:#4ade80;">You are a Top Driver! ★</div>
+          <div style="font-size:11px; color:#94a3b8;">Keep it up and earn more.</div>
+        </div>
+      </div>
+
+      <!-- Your Tools -->
+      <div class="section-head" style="margin-top:12px; margin-bottom:6px;">Your Tools</div>
+      <div class="tools-grid">
+        <div class="tool-btn"><span>👛</span><div>Earnings</div></div>
+        <div class="tool-btn"><span>🚗</span><div>My Rides</div></div>
+        <div class="tool-btn"><span>🎖️</span><div>Incentives</div></div>
+        <div class="tool-btn"><span>❓</span><div>Help</div></div>
+        <div class="tool-btn"><span>⋯</span><div>More</div></div>
+      </div>
+
+      <!-- Go Online Button -->
+      <button class="go-online-btn" id="goOnlineMainBtn" onclick="toggleDuty(true)">
+        <span>Go Online</span>
+        <span>⏻</span>
+      </button>
+
+      <!-- Bottom Nav -->
+      <div class="bottom-nav">
+        <div class="nav-item active"><span>🏠</span>Home</div>
+        <div class="nav-item"><span>📅</span>Rides</div>
+        <div class="nav-item"><span>💰</span>Earnings</div>
+        <div class="nav-item"><span>👤</span>Profile</div>
       </div>
     </div>
 
-    <!-- Dark Map Canvas -->
-    <div id="driverMap"></div>
-
-    <!-- Bottom Sheet -->
-    <div class="sheet-card">
-
-      <!-- Incoming Trip Alert Modal -->
-      <div id="orderModal" class="status-overlay" style="border-color: #facc15;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size:12px; font-weight:800; color:#facc15;">🚨 NEW RIDE DISPATCH</div>
-          <span id="secondsLeft" style="font-size:12px; font-weight:800; color:#facc15;">15s</span>
-        </div>
-        <div class="timer-bar">
-          <div id="timerFill" class="timer-fill"></div>
-        </div>
-        <div style="font-size:24px; font-weight:900; color:#4ade80; margin-top:8px;" id="incomingPayout">₹107.00</div>
-        <div id="orderClassTag" style="font-size:12px; color:#94a3b8; font-weight:700;">Class: Auto (7.2 km)</div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="cta-btn-green" style="flex:2; padding:12px;" onclick="acceptOrder()">Accept Order</button>
-          <button class="cta-btn-red" style="flex:1; padding:12px;" onclick="declineOrder()">Decline</button>
-        </div>
+    <!-- 2. ACTIVE RIDE / ON TRIP VIEW -->
+    <div id="activeRideView">
+      <div class="trip-top-nav">
+        <span style="font-size:18px; cursor:pointer;" onclick="closeTripView()">⌄</span>
+        <span style="font-weight:800; font-size:15px; color:#22c55e;">On Trip</span>
+        <span class="sos-badge">SOS</span>
       </div>
 
-      <!-- OTP Verification Card -->
-      <div id="otpModal" class="status-overlay">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase;">Enter Rider's PIN</div>
-          <button class="icon-circle-btn" style="width:auto; border-radius:8px; padding:4px 10px; font-size:11px;" id="callRiderBtn" onclick="toggleCall()">📞 Call Rider</button>
-        </div>
-        <input class="pin-input" id="driverPinInput" type="number" pattern="[0-9]*" inputmode="numeric" maxlength="4" placeholder="••••" />
-        <button class="cta-btn-green" onclick="submitPin()">Verify & Start Ride</button>
-      </div>
-
-      <!-- Active Telemetry & Completion Card -->
-      <div id="activeTripModal" class="status-overlay" style="border-color:#4ade80;">
-        <div style="font-size:12px; font-weight:800; color:#4ade80;">GPS TELEMETRY STREAMING</div>
-        <div style="font-size:11px; color:#94a3b8; margin: 4px 0 10px;">Broadcasting turn-by-turn trajectory...</div>
-        <button class="cta-btn-yellow" onclick="finishTrip()">Complete Trip</button>
-      </div>
-
-      <!-- Standby Vehicle Orb Selection (Offline/Online) -->
-      <div id="dutyControlsWrap" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-        <div class="orb-carousel">
-          <div class="orb-item" id="orbCab" onclick="pickTier('Cab', this)">
-            <div class="orb-circle">🚗</div>
-            <div class="orb-label">CAB</div>
+      <!-- Route steps card -->
+      <div class="trip-route-card">
+        <div class="route-steps">
+          <div class="step-item">
+            <span style="color:#22c55e;">🟢</span>
+            <span id="tripPickup">Hanamkonda, Telangana</span>
           </div>
-          <div class="orb-item active" id="orbAuto" onclick="pickTier('Auto', this)">
-            <div class="orb-circle">🛺</div>
-            <div class="orb-label">AUTO</div>
-          </div>
-          <div class="orb-item" id="orbBike" onclick="pickTier('Bike', this)">
-            <div class="orb-circle">🏍️</div>
-            <div class="orb-label">BIKE</div>
+          <div class="step-item">
+            <span style="color:#ef4444;">🔴</span>
+            <span id="tripDrop">Reddy Colony, Hanamkonda</span>
           </div>
         </div>
-
-        <div class="orb-eta" id="driverVehicleTitle">Vehicle: Bajaj Compact 4S</div>
-        <div class="fare-price" id="todayEarnings">₹0</div>
-        <div class="fare-subtitle">Today's Net Pay ⓘ</div>
-
-        <button class="cta-btn-yellow" id="onlineToggleBtn" onclick="goOnline()">
-          <span>Go Online</span>
-          <span>→</span>
-        </button>
+        <div class="nav-launch-btn">▲ Navigate</div>
       </div>
 
-      <!-- Driver Performance Strip -->
-      <div class="metrics-bar">
+      <!-- Active Tracking Map -->
+      <div style="flex:1; margin:0 16px; border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+        <div id="tripMap" style="width:100%; height:100%; min-height:220px;"></div>
+      </div>
+
+      <!-- Distance & ETA Metric Strip -->
+      <div class="stats-strip" style="margin-top:10px;">
         <div>
-          <div class="metric-val" id="statTrips">0</div>
-          <div class="metric-lbl">Trips</div>
+          <div class="stat-val">12 min</div>
+          <div class="stat-label">ETA</div>
         </div>
-        <div style="border-left:1px solid rgba(255,255,255,0.08); border-right:1px solid rgba(255,255,255,0.08);">
-          <div class="metric-val" id="statNet">₹0</div>
-          <div class="metric-lbl">Net Payout</div>
+        <div style="border-left:1px solid rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.06);">
+          <div class="stat-val">7.2 km</div>
+          <div class="stat-label">Distance</div>
         </div>
         <div>
-          <div class="metric-val" id="statCut">₹0</div>
-          <div class="metric-lbl">Fee (15%)</div>
+          <div class="stat-val" id="activeFare">₹126</div>
+          <div class="stat-label">Fare</div>
         </div>
       </div>
 
-      <!-- Driver Quick Tools -->
-      <div class="action-grid">
-        <div class="action-tile"><span>💵</span><div>Payouts</div></div>
-        <div class="action-tile"><span>🛡️</span><div>Safety</div></div>
-        <div class="action-tile"><span>⭐</span><div>Ratings</div></div>
-        <div class="action-tile"><span>⋯</span><div>More</div></div>
+      <!-- Customer Detail Strip -->
+      <div class="customer-card">
+        <div class="cust-meta">
+          <div class="cust-avatar">👨</div>
+          <div>
+            <div style="font-size:14px; font-weight:800;">Raj Kumar <span style="color:#22c55e; font-size:12px;">4.8 ★</span></div>
+            <div style="font-size:11px; color:#94a3b8;">+91 98765 43210</div>
+          </div>
+        </div>
+        <div class="action-icons">
+          <div class="round-action-btn" onclick="openChat()">💬</div>
+          <div class="round-action-btn" onclick="toggleCall()" id="callBtn">📞</div>
+        </div>
       </div>
 
+      <!-- Cash to Collect -->
+      <div class="cash-collect-bar">
+        <span style="color:#94a3b8;">Cash to collect</span>
+        <span style="color:#4ade80; font-size:18px;" id="cashCollectVal">₹126</span>
+      </div>
+
+      <!-- Complete Trip Action -->
+      <button class="complete-trip-btn" onclick="completeCurrentTrip()">
+        <span>Complete Trip</span>
+        <span>→</span>
+      </button>
     </div>
 
+  </div>
+
+  <!-- Note to Customer Modal -->
+  <div class="chat-modal" id="chatModal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:13px; font-weight:800;">Note to Customer</span>
+      <span style="cursor:pointer; color:#94a3b8;" onclick="closeChat()">✕</span>
+    </div>
+    <div id="chatLog" style="max-height:80px; overflow-y:auto; font-size:12px; color:#cbd5e1; background:#090c10; padding:8px; border-radius:8px;">
+      Customer: "Please wait near the gate"
+    </div>
+    <div style="display:flex; gap:8px;">
+      <input class="chat-input" id="driverMsgInput" placeholder="Type a message or arrival note..." />
+      <button class="go-online-btn" style="margin:0; padding:10px 16px; font-size:13px;" onclick="sendDriverNote()">Send</button>
+    </div>
   </div>
 
   <audio id="remoteAudio" autoplay playsinline></audio>
 
   <script>
     const socket = io(window.location.origin, { transports: ['websocket', 'polling'] });
-
-    let activeRideId = null, targetCustomerSocketId = null, currentPath = null;
-    let peerConnection = null, localStream = null, isCalling = false;
-    let countdownInterval = null;
-    let selectedTier = 'Auto';
+    let activeRideId = null, targetCustomerSocketId = null;
+    let isOnline = false, isCalling = false;
+    let peerConnection = null, localStream = null;
     const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
     const pickupCoords = [17.9784, 79.5218];
     const dropCoords = [18.0125, 79.5606];
-
-    let map = null, vehicleMarker = null, dynamicPolyline = null;
+    let homeMap = null, tripMap = null, tripMarker = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       try {
-        map = L.map('driverMap', { zoomControl: false }).setView([17.9950, 79.5412], 13);
-        
-        // CartoDB Dark Matter tiles
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          subdomains: 'abcd'
-        }).addTo(map);
+        homeMap = L.map('driverMap', { zoomControl: false }).setView([17.9950, 79.5412], 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(homeMap);
+        L.circleMarker(pickupCoords, { radius: 8, color: '#3b82f6', fillColor: '#60a5fa', fillOpacity: 1 }).addTo(homeMap);
 
-        L.circleMarker(pickupCoords, { radius: 7, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 1 }).addTo(map);
-        L.circleMarker(dropCoords, { radius: 7, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1 }).addTo(map);
-
-        vehicleMarker = L.circleMarker(pickupCoords, { radius: 9, color: '#facc15', fillColor: '#fbbf24', fillOpacity: 1 }).addTo(map);
-
-        setTimeout(() => { if (map) map.invalidateSize(); }, 300);
-      } catch (e) {
-        console.error('Leaflet error:', e);
-      }
+        setTimeout(() => { if (homeMap) homeMap.invalidateSize(); }, 300);
+      } catch (e) { console.error('Map error:', e); }
     });
 
-    function pickTier(tier, element) {
-      selectedTier = tier;
-      document.querySelectorAll('.orb-item').forEach(el => el.classList.remove('active'));
-      element.classList.add('active');
-      document.getElementById('driverVehicleTitle').innerText = `Vehicle: ${tier === 'Auto' ? 'Bajaj Compact 4S' : tier === 'Bike' ? 'Honda Shine 125' : 'Swift Dzire'}`;
+    function toggleDuty(online) {
+      isOnline = online;
+      document.getElementById('dutyToggle').checked = online;
+      const title = document.getElementById('statusTitle');
+      const desc = document.getElementById('statusDesc');
+      const btn = document.getElementById('goOnlineMainBtn');
+
+      if (online) {
+        socket.emit('driver:online', { driverId: 'drv_101', name: 'Ramesh Rao', vehiclePlate: 'TS 03 EQ 4812' });
+        title.innerText = "You're Online";
+        desc.innerText = "Ready and searching for trips...";
+        btn.innerText = "You Are Online";
+        btn.style.background = "#15803d";
+      } else {
+        title.innerText = "You're Offline";
+        desc.innerText = "Go online to start accepting trips";
+        btn.innerText = "Go Online ⏻";
+        btn.style.background = "#22c55e";
+      }
     }
 
-    function fetchMetrics() {
-      fetch('/api/driver/drv_101/metrics')
-        .then(r => r.json())
-        .then(m => {
-          document.getElementById('statTrips').innerText = m.total_trips || 0;
-          document.getElementById('statNet').innerText = `₹${m.total_earnings || 0}`;
-          document.getElementById('todayEarnings').innerText = `₹${m.total_earnings || 0}`;
-          document.getElementById('statCut').innerText = `₹${Math.round(m.platform_cut || 0)}`;
-        })
-        .catch(err => console.log('Metrics error:', err));
-    }
-    fetchMetrics();
-    socket.on('driver:refresh_metrics', fetchMetrics);
-
-    function goOnline() {
-      socket.emit('driver:online', { driverId: 'drv_101', name: 'Ramesh Rao', vehiclePlate: 'TS 03 EQ 4812', vehicleClass: selectedTier });
-      const tag = document.getElementById('dutyTag');
-      tag.innerText = 'Online';
-      tag.style.background = '#064e3b';
-      tag.style.color = '#34d399';
-      tag.style.borderColor = '#10b981';
-      document.getElementById('onlineToggleBtn').style.display = 'none';
-      if (map) map.invalidateSize();
-    }
-
+    // Trip Dispatch Trigger
     socket.on('driver:incoming_alert', (order) => {
       activeRideId = order.rideId;
-      currentPath = order.path;
-      document.getElementById('incomingPayout').innerText = `₹${order.driverPayout}.00`;
-      document.getElementById('orderClassTag').innerText = `Class: ${order.vehicleType} (${order.distanceKm} km)`;
-      document.getElementById('orderModal').style.display = 'block';
-
-      if (map && currentPath) {
-        if (dynamicPolyline) map.removeLayer(dynamicPolyline);
-        dynamicPolyline = L.polyline(currentPath, { color: '#facc15', weight: 4 }).addTo(map);
+      if (confirm(`New Ride Request! Fare: ₹${order.fare}. Accept?`)) {
+        socket.emit('driver:accept', { rideId: activeRideId, driverId: 'drv_101' });
+        openActiveRide(order);
       }
-
-      let remaining = 15;
-      document.getElementById('secondsLeft').innerText = `${remaining}s`;
-      document.getElementById('timerFill').style.width = '100%';
-
-      if (countdownInterval) clearInterval(countdownInterval);
-      countdownInterval = setInterval(() => {
-        remaining--;
-        document.getElementById('secondsLeft').innerText = `${remaining}s`;
-        document.getElementById('timerFill').style.width = `${(remaining / 15) * 100}%`;
-        if (remaining <= 0) {
-          clearInterval(countdownInterval);
-          dismissAlert();
-        }
-      }, 1000);
     });
-
-    socket.on('driver:alert_revoked', ({ rideId }) => {
-      if (activeRideId === rideId) dismissAlert();
-    });
-
-    function dismissAlert() {
-      if (countdownInterval) clearInterval(countdownInterval);
-      document.getElementById('orderModal').style.display = 'none';
-      if (map && dynamicPolyline) { map.removeLayer(dynamicPolyline); dynamicPolyline = null; }
-    }
-
-    function declineOrder() {
-      socket.emit('driver:decline', { rideId: activeRideId, driverId: 'drv_101' });
-      dismissAlert();
-    }
-
-    function acceptOrder() {
-      if (countdownInterval) clearInterval(countdownInterval);
-      socket.emit('driver:accept', { rideId: activeRideId, driverId: 'drv_101' });
-      document.getElementById('orderModal').style.display = 'none';
-      document.getElementById('otpModal').style.display = 'block';
-    }
 
     socket.on('driver:accepted_success', (data) => {
       targetCustomerSocketId = data.customerSocketId;
-      const tag = document.getElementById('dutyTag');
-      tag.innerText = 'Assigned';
-      tag.style.background = '#1e3a8a';
-      tag.style.color = '#60a5fa';
     });
 
-    function submitPin() {
-      const pin = document.getElementById('driverPinInput').value;
-      socket.emit('driver:verify_otp', { rideId: activeRideId, inputOtp: pin });
-    }
+    function openActiveRide(order) {
+      document.getElementById('homeView').style.display = 'none';
+      document.getElementById('activeRideView').style.display = 'flex';
+      document.getElementById('activeFare').innerText = `₹${order.fare}`;
+      document.getElementById('cashCollectVal').innerText = `₹${order.fare}`;
 
-    socket.on('otp:result', (res) => {
-      if (res.success) {
-        document.getElementById('otpModal').style.display = 'none';
-        document.getElementById('activeTripModal').style.display = 'block';
-
-        let step = 0;
-        const totalSteps = currentPath.length;
-        const interval = setInterval(() => {
-          step++;
-          if (step < totalSteps) {
-            const coord = currentPath[step];
-            if (vehicleMarker) vehicleMarker.setLatLng(coord);
-            socket.emit('ride:telemetry', { rideId: activeRideId, lat: coord[0], lng: coord[1], progress: step / totalSteps });
-          } else {
-            clearInterval(interval);
+      setTimeout(() => {
+        if (!tripMap) {
+          tripMap = L.map('tripMap', { zoomControl: false }).setView([17.9950, 79.5412], 13);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(tripMap);
+          L.circleMarker(pickupCoords, { radius: 7, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 1 }).addTo(tripMap);
+          L.circleMarker(dropCoords, { radius: 7, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1 }).addTo(tripMap);
+          tripMarker = L.circleMarker(pickupCoords, { radius: 8, color: '#ffffff', fillColor: '#facc15', fillOpacity: 1 }).addTo(tripMap);
+          
+          if (order.path) {
+            L.polyline(order.path, { color: '#facc15', weight: 4 }).addTo(tripMap);
           }
-        }, 1200);
-      } else {
-        alert('Invalid PIN! Customer PIN is 1234');
-      }
-    });
-
-    function finishTrip() {
-      socket.emit('driver:complete', { rideId: activeRideId });
-      document.getElementById('activeTripModal').style.display = 'none';
-      document.getElementById('dutyTag').innerText = 'Finished';
-      if (isCalling) endCall();
-      setTimeout(fetchMetrics, 500);
+        }
+        tripMap.invalidateSize();
+      }, 200);
     }
 
-    // VoIP Logic
-    async function toggleCall() { isCalling ? endCall() : await startCall(); }
+    function completeCurrentTrip() {
+      socket.emit('driver:complete', { rideId: activeRideId });
+      alert('Trip completed successfully!');
+      closeTripView();
+    }
 
+    function closeTripView() {
+      document.getElementById('activeRideView').style.display = 'none';
+      document.getElementById('homeView').style.display = 'block';
+      if (homeMap) homeMap.invalidateSize();
+    }
+
+    // Messaging / Notes logic
+    function openChat() { document.getElementById('chatModal').style.display = 'flex'; }
+    function closeChat() { document.getElementById('chatModal').style.display = 'none'; }
+
+    function sendDriverNote() {
+      const msg = document.getElementById('driverMsgInput').value;
+      if (!msg) return;
+      socket.emit('msg:to_customer', { rideId: activeRideId, message: msg });
+      const log = document.getElementById('chatLog');
+      log.innerHTML += `<div><b>You:</b> ${msg}</div>`;
+      document.getElementById('driverMsgInput').value = '';
+    }
+
+    socket.on('msg:received_driver', ({ message }) => {
+      const log = document.getElementById('chatLog');
+      log.innerHTML += `<div style="color:#38bdf8;"><b>Customer:</b> ${message}</div>`;
+      alert(`New message from Rider: ${message}`);
+    });
+
+    // VoIP Call Support
+    async function toggleCall() { isCalling ? endCall() : await startCall(); }
     async function startCall() {
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -631,53 +605,21 @@
         localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
         peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
         peerConnection.onicecandidate = e => {
-          if (e.candidate && targetCustomerSocketId) {
-            socket.emit('call:ice_candidate', { targetSocketId: targetCustomerSocketId, candidate: e.candidate });
-          }
+          if (e.candidate && targetCustomerSocketId) socket.emit('call:ice_candidate', { targetSocketId: targetCustomerSocketId, candidate: e.candidate });
         };
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         socket.emit('call:initiate', { targetSocketId: targetCustomerSocketId, offer });
         isCalling = true;
-        document.getElementById('callRiderBtn').innerText = '🔴 End';
-      } catch (err) { alert('Microphone access needed for VoIP calling.'); }
+        document.getElementById('callBtn').innerText = '🔴';
+      } catch (err) { alert('Microphone required for calls.'); }
     }
 
-    socket.on('call:accepted', async ({ answer }) => {
-      if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on('call:incoming', async ({ fromSocketId, offer }) => {
-      targetCustomerSocketId = fromSocketId;
-      if (confirm('Incoming call from Rider. Accept?')) {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        peerConnection = new RTCPeerConnection(rtcConfig);
-        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-        peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
-        peerConnection.onicecandidate = e => {
-          if (e.candidate) socket.emit('call:ice_candidate', { targetSocketId: fromSocketId, candidate: e.candidate });
-        };
-        await peerConnection.setLocalDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('call:accept', { targetSocketId: fromSocketId, answer });
-        isCalling = true;
-        document.getElementById('callRiderBtn').innerText = '🔴 End';
-      }
-    });
-
-    socket.on('call:ice_candidate', async ({ candidate }) => {
-      if (peerConnection && candidate) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-
-    socket.on('call:ended', () => endCall(false));
-
-    function endCall(notify = true) {
-      if (notify && targetCustomerSocketId) socket.emit('call:end', { targetSocketId: targetCustomerSocketId });
+    function endCall() {
       if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
       if (peerConnection) { peerConnection.close(); peerConnection = null; }
       isCalling = false;
-      document.getElementById('callRiderBtn').innerText = '📞 Call Rider';
+      document.getElementById('callBtn').innerText = '📞';
     }
   </script>
 </body>

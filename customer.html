@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Velox Ride</title>
 
-  <!-- Leaflet CDN -->
+  <!-- Leaflet & Socket.io CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Socket.io CDN -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
@@ -58,13 +57,9 @@
       color: #fff;
       cursor: pointer;
     }
-    .header-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #ffffff;
-    }
+    .header-title { font-size: 16px; font-weight: 700; color: #ffffff; }
 
-    /* Route Address Card */
+    /* Address Input Card */
     .address-card {
       background: rgba(18, 23, 31, 0.92);
       backdrop-filter: blur(16px);
@@ -76,46 +71,17 @@
       gap: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
-    .route-dots {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
+    .route-dots { display: flex; flex-direction: column; align-items: center; gap: 3px; }
     .dot-green { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid #22c55e; background: transparent; }
     .dot-line { width: 1.5px; height: 18px; border-left: 1.5px dashed #475569; }
     .dot-red { width: 10px; height: 10px; border-radius: 50%; border: 2.5px solid #ef4444; background: transparent; }
-    .inputs-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .loc-field {
-      font-size: 13px;
-      font-weight: 600;
-      color: #f8fafc;
-      background: transparent;
-      border: none;
-      outline: none;
-      width: 100%;
-    }
-    .loc-sub {
-      font-size: 11px;
-      color: #64748b;
-      margin-top: -4px;
-    }
+    .inputs-wrap { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .loc-field { font-size: 13px; font-weight: 600; color: #f8fafc; background: transparent; border: none; outline: none; width: 100%; }
 
-    /* Map Viewport */
-    #map {
-      width: 100%;
-      height: 52vh;
-      min-height: 320px;
-      background: #0b0f17;
-      z-index: 1;
-    }
+    /* Dark Map Viewport */
+    #map { width: 100%; height: 50vh; min-height: 300px; background: #0b0f17; z-index: 1; }
 
-    /* Bottom Modal / Sheet */
+    /* Bottom Sheet */
     .sheet-card {
       flex: 1;
       background: #0e131b;
@@ -131,7 +97,7 @@
       box-shadow: 0 -12px 30px rgba(0,0,0,0.7);
     }
 
-    /* Screen 1: Ride Orb Layout */
+    /* Screen 1: Ride Orb Carousel */
     .orb-carousel {
       width: 100%;
       display: flex;
@@ -160,20 +126,9 @@
       justify-content: center;
       font-size: 34px;
     }
-    .orb-label {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #94a3b8;
-      margin-top: 6px;
-      text-transform: uppercase;
-    }
+    .orb-label { font-size: 11px; font-weight: 800; color: #94a3b8; margin-top: 6px; text-transform: uppercase; }
     
-    /* Highlighted Center Orb with Yellow Glow */
-    .orb-item.active {
-      opacity: 1;
-      transform: scale(1.08);
-    }
+    .orb-item.active { opacity: 1; transform: scale(1.08); }
     .orb-item.active .orb-circle {
       width: 86px;
       height: 86px;
@@ -181,36 +136,44 @@
       border: 2px solid #facc15;
       box-shadow: 0 0 28px rgba(250, 204, 21, 0.45);
     }
-    .orb-item.active .orb-label {
-      color: #ffffff;
-    }
-    .orb-eta {
-      font-size: 12px;
-      color: #facc15;
-      font-weight: 700;
-      margin-top: 10px;
-    }
+    .orb-item.active .orb-label { color: #ffffff; }
+    .orb-eta { font-size: 12px; color: #facc15; font-weight: 700; margin-top: 10px; }
 
-    /* Total Fare Display */
-    .fare-price {
-      font-size: 36px;
-      font-weight: 900;
-      color: #ffffff;
-      margin-top: 8px;
-      letter-spacing: -0.5px;
-    }
-    .fare-subtitle {
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 500;
+    .fare-price { font-size: 36px; font-weight: 900; color: #ffffff; margin-top: 8px; }
+    .fare-subtitle { font-size: 12px; color: #94a3b8; margin-top: 2px; margin-bottom: 14px; }
+
+    .cta-btn-yellow {
+      width: 100%;
+      background: #facc15;
+      color: #000000;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 4px;
-      margin-top: 2px;
-      margin-bottom: 14px;
+      justify-content: center;
+      gap: 8px;
+    }
+    .cta-btn-green {
+      width: 100%;
+      background: #4ade80;
+      color: #04220e;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    /* Screen 2: Trip Preview Grid */
+    /* Screen 2: Metrics Bar */
     .metrics-bar {
       width: 100%;
       display: grid;
@@ -242,72 +205,81 @@
     .sel-sub { font-size: 11px; color: #64748b; }
     .sel-seats { background: #1c2636; padding: 4px 8px; border-radius: 8px; font-size: 12px; color: #94a3b8; font-weight: 700; }
 
-    /* Yellow and Green CTA Buttons */
-    .cta-btn-yellow {
-      width: 100%;
-      background: #facc15;
-      color: #000000;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 18px rgba(250, 204, 21, 0.3);
-    }
-    .cta-btn-green {
-      width: 100%;
-      background: #4ade80;
-      color: #04220e;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 18px rgba(74, 222, 128, 0.3);
-    }
-
-    /* Bottom 4 Utility Action Tiles */
-    .action-grid {
+    /* ACTION BAR WITH PAYMENT DROPDOWN & BRAND / NOTE TO DRIVER */
+    .custom-action-row {
       width: 100%;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 14px;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
     }
-    .action-tile {
+    .select-dropdown-tile {
       background: #141c28;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 8px 4px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
+      justify-content: space-between;
+      cursor: pointer;
+      position: relative;
+    }
+    .brand-note-tile {
+      background: #141c28;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       cursor: pointer;
     }
-    .action-tile span { font-size: 16px; }
-    .action-tile div { font-size: 10px; color: #94a3b8; font-weight: 600; }
+    .brand-pill {
+      background: #facc15;
+      color: #000;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
 
-    /* Active Trip / OTP Card */
-    .status-overlay {
-      width: 100%;
-      background: #141c28;
-      border-radius: 14px;
-      border: 1px solid #22c55e;
-      padding: 14px;
-      text-align: center;
+    /* Hidden Dropdown Options Menu */
+    .payment-dropdown-menu {
+      position: absolute;
+      bottom: 50px;
+      left: 0;
+      right: 0;
+      background: #1c2636;
+      border: 1px solid #334155;
+      border-radius: 12px;
       display: none;
-      margin-bottom: 12px;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    .pay-option {
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pay-option:hover { background: #22c55e; color: #04220e; }
+
+    /* Note Modal */
+    .note-modal {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #141c28;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 18px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 3000;
     }
   </style>
 </head>
@@ -331,12 +303,8 @@
           <div class="dot-red"></div>
         </div>
         <div class="inputs-wrap">
-          <div>
-            <input class="loc-field" id="pickupTxt" value="Hanamkonda, Telangana" />
-          </div>
-          <div>
-            <input class="loc-field" id="dropTxt" value="Reddy Colony, Hanamkonda" />
-          </div>
+          <div><input class="loc-field" id="pickupTxt" value="Hanamkonda, Telangana" /></div>
+          <div><input class="loc-field" id="dropTxt" value="Reddy Colony, Hanamkonda" /></div>
         </div>
         <div style="color: #64748b; font-size: 18px; cursor: pointer;">⇅</div>
       </div>
@@ -345,18 +313,18 @@
     <!-- Map Canvas -->
     <div id="map"></div>
 
-    <!-- Screen 1: Ride Orb Layout (Default) -->
+    <!-- Screen 1: Ride Orb Layout -->
     <div id="orbSheet" class="sheet-card">
       <div class="orb-carousel">
-        <div class="orb-item" id="tierCab" onclick="pickTier('Cab', 180, '14 min', this)">
+        <div class="orb-item" onclick="pickTier('Cab', 180, '14 min', this)">
           <div class="orb-circle">🚗</div>
           <div class="orb-label">CAB</div>
         </div>
-        <div class="orb-item active" id="tierAuto" onclick="pickTier('Auto', 126, '12 min', this)">
+        <div class="orb-item active" onclick="pickTier('Auto', 126, '12 min', this)">
           <div class="orb-circle">🛺</div>
           <div class="orb-label">AUTO</div>
         </div>
-        <div class="orb-item" id="tierBike" onclick="pickTier('Bike', 58, '8 min', this)">
+        <div class="orb-item" onclick="pickTier('Bike', 58, '8 min', this)">
           <div class="orb-circle">🏍️</div>
           <div class="orb-label">BIKE</div>
         </div>
@@ -370,27 +338,12 @@
         <span>Continue</span>
         <span>→</span>
       </button>
-
-      <div class="action-grid">
-        <div class="action-tile"><span>💵</span><div>Cash</div></div>
-        <div class="action-tile"><span>⏱️</span><div>Offers</div></div>
-        <div class="action-tile"><span>📋</span><div>Coupon</div></div>
-        <div class="action-tile"><span>⋯</span><div>More</div></div>
-      </div>
     </div>
 
-    <!-- Screen 2: Trip Preview (Hidden until Continue is tapped) -->
+    <!-- Screen 2: Trip Preview -->
     <div id="previewSheet" class="sheet-card" style="display:none;">
       
-      <!-- Live Matched Driver Status / Safety PIN -->
-      <div id="activeMatchAlert" class="status-overlay">
-        <div style="font-size:11px; text-transform:uppercase; color:#22c55e; font-weight:700;">Driver Assigned</div>
-        <div id="driverStatus" style="font-size:15px; font-weight:800; margin:4px 0;">Ramesh Rao (TS 03 EQ 4812)</div>
-        <div style="font-size:12px; color:#94a3b8;">Share PIN: <b style="color:#facc15; font-size:16px;">1234</b></div>
-        <button class="icon-circle-btn" style="margin: 8px auto 0; width:auto; border-radius:8px; padding:6px 14px; font-size:12px;" onclick="toggleVoipCall()">📞 Call Driver</button>
-      </div>
-
-      <!-- Distance & ETA Metric Strip -->
+      <!-- Metrics Strip -->
       <div class="metrics-bar">
         <div>
           <div class="metric-val" id="prevEta">12 min</div>
@@ -406,117 +359,111 @@
         </div>
       </div>
 
-      <!-- Selected Vehicle Bar -->
+      <!-- Selected Vehicle Row -->
       <div class="selected-ride-row">
         <div class="sel-left">
           <div class="sel-icon" id="prevIcon">🛺</div>
           <div>
             <div class="sel-title" id="prevTitle">Auto</div>
-            <div class="sel-sub" id="prevSub">3 min away</div>
+            <div class="sel-sub">3 min away</div>
           </div>
         </div>
-        <div class="sel-seats" id="prevSeats">👤 3</div>
+        <div class="sel-seats">👤 3</div>
       </div>
 
-      <!-- Payment & Coupon Actions -->
-      <div class="action-grid" style="margin-top:0; margin-bottom:14px; grid-template-columns: repeat(3, 1fr);">
-        <div class="action-tile"><span>💵</span><div>Cash</div></div>
-        <div class="action-tile"><span>%</span><div>Apply Coupon</div></div>
-        <div class="action-tile"><span>✏️</span><div>Note to driver</div></div>
+      <!-- PAYMENT DROPDOWN & BRAND + NOTE TO DRIVER -->
+      <div class="custom-action-row">
+        <!-- 1. Drop Button at Cash to Select Mode -->
+        <div class="select-dropdown-tile" onclick="togglePaymentMenu()">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="currentPayIcon">💵</span>
+            <span style="font-size:12px; font-weight:700;" id="currentPayLabel">Cash</span>
+          </div>
+          <span style="font-size:12px; color:#64748b;">▼</span>
+
+          <div class="payment-dropdown-menu" id="paymentDropdown">
+            <div class="pay-option" onclick="choosePayment('💵', 'Cash')">💵 Cash</div>
+            <div class="pay-option" onclick="choosePayment('📱', 'UPI / GPay')">📱 UPI / GPay</div>
+            <div class="pay-option" onclick="choosePayment('👛', 'Velox Wallet')">👛 Velox Wallet</div>
+          </div>
+        </div>
+
+        <!-- 2. Brand Name & Note to Driver -->
+        <div class="brand-note-tile" onclick="openNoteModal()">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="brand-pill">VELOX</span>
+            <span style="font-size:11px; font-weight:700;">Note to driver</span>
+          </div>
+          <span>✏️</span>
+        </div>
       </div>
 
-      <!-- Booking CTA -->
+      <!-- Confirm Booking Button -->
       <button class="cta-btn-green" id="confirmBookBtn" onclick="dispatchRide()">
         <span>Confirm & Book</span>
         <span>→</span>
       </button>
+
+      <!-- Assigned Driver Status -->
+      <div id="activeMatchAlert" style="display:none; width:100%; margin-top:10px; background:#141c28; border:1px solid #22c55e; border-radius:12px; padding:10px; text-align:center;">
+        <div style="font-size:11px; color:#22c55e; font-weight:800;">DRIVER EN ROUTE</div>
+        <div style="font-size:14px; font-weight:800; margin:3px 0;">Ramesh Rao (TS 03 EQ 4812)</div>
+        <div style="font-size:12px;">Share PIN: <b style="color:#facc15; font-size:15px;">1234</b></div>
+      </div>
     </div>
 
+  </div>
+
+  <!-- Note to Driver Modal -->
+  <div class="note-modal" id="noteModal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:13px; font-weight:800;">Send Note / Pickup Instruction</span>
+      <span style="cursor:pointer; color:#94a3b8;" onclick="closeNoteModal()">✕</span>
+    </div>
+    <input id="noteInput" style="width:100%; padding:12px; background:#090c10; border:1px solid #334155; border-radius:10px; color:#fff; font-size:14px; outline:none;" placeholder="E.g. Waiting near main gate, yellow bag..." />
+    <button class="cta-btn-green" style="padding:12px;" onclick="sendNote()">Send to Driver</button>
   </div>
 
   <audio id="remoteAudio" autoplay playsinline></audio>
 
   <script>
     const socket = io(window.location.origin, { transports: ['websocket', 'polling'] });
-
     let activeRideId = null, assignedDriverSocketId = null;
-    let selectedVehicle = 'Auto';
-    let selectedPrice = 126;
-    let selectedEta = '12 min';
-    let isCalling = false, peerConnection = null, localStream = null;
-    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    let selectedVehicle = 'Auto', selectedPrice = 126, selectedEta = '12 min';
 
-    // Kazipet / Hanamkonda Corridor Coordinates
     const pickupCoords = [17.9784, 79.5218];
     const dropCoords = [18.0125, 79.5606];
+    let map = null;
 
-    let map = null, carMarker = null;
-
-    // Dark Map Layer
     window.addEventListener('DOMContentLoaded', () => {
       try {
         map = L.map('map', { zoomControl: false }).setView([17.9950, 79.5412], 13);
-        
-        // CartoDB Dark Matter tiles to match the exact dark UI
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          subdomains: 'abcd'
-        }).addTo(map);
-
-        // Custom start & end markers
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
         L.circleMarker(pickupCoords, { radius: 7, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 1 }).addTo(map);
         L.circleMarker(dropCoords, { radius: 7, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1 }).addTo(map);
-
-        // Gold polyline connecting pickup to drop
-        const routePath = [
-          pickupCoords,
-          [17.9850, 79.5300],
-          [17.9940, 79.5420],
-          [18.0050, 79.5510],
-          dropCoords
-        ];
-        L.polyline(routePath, { color: '#facc15', weight: 4, opacity: 0.95 }).addTo(map);
-
+        
+        const route = [pickupCoords, [17.9850, 79.5300], [17.9940, 79.5420], [18.0050, 79.5510], dropCoords];
+        L.polyline(route, { color: '#facc15', weight: 4 }).addTo(map);
         setTimeout(() => { if (map) map.invalidateSize(); }, 300);
-      } catch (e) {
-        console.error('Leaflet map initialization error:', e);
-      }
+      } catch (e) { console.error('Map init error:', e); }
     });
 
-    // Orb Tier Selection
     function pickTier(tier, price, eta, element) {
-      selectedVehicle = tier;
-      selectedPrice = price;
-      selectedEta = eta;
-
+      selectedVehicle = tier; selectedPrice = price; selectedEta = eta;
       document.querySelectorAll('.orb-item').forEach(el => el.classList.remove('active'));
       element.classList.add('active');
-
       document.getElementById('orbEta').innerText = eta;
       document.getElementById('orbFare').innerText = `₹${price}`;
     }
 
-    // Toggle between Orb Layout (Screen 1) and Trip Preview (Screen 2)
     function showPreviewScreen() {
       document.getElementById('orbSheet').style.display = 'none';
       document.getElementById('previewSheet').style.display = 'flex';
       document.getElementById('pageTitle').style.display = 'block';
-
       document.getElementById('prevEta').innerText = selectedEta;
       document.getElementById('prevFare').innerText = `₹${selectedPrice}`;
       document.getElementById('prevTitle').innerText = selectedVehicle;
-
-      if (selectedVehicle === 'Auto') {
-        document.getElementById('prevIcon').innerText = '🛺';
-        document.getElementById('prevSeats').innerText = '👤 3';
-      } else if (selectedVehicle === 'Bike') {
-        document.getElementById('prevIcon').innerText = '🏍️';
-        document.getElementById('prevSeats').innerText = '👤 1';
-      } else {
-        document.getElementById('prevIcon').innerText = '🚗';
-        document.getElementById('prevSeats').innerText = '👤 4';
-      }
-
+      document.getElementById('prevIcon').innerText = selectedVehicle === 'Auto' ? '🛺' : selectedVehicle === 'Bike' ? '🏍️' : '🚗';
       if (map) map.invalidateSize();
     }
 
@@ -529,12 +476,39 @@
       }
     }
 
-    // Dispatch Ride to Driver Portal
+    // Payment Dropdown Logic
+    function togglePaymentMenu() {
+      const menu = document.getElementById('paymentDropdown');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function choosePayment(icon, label) {
+      document.getElementById('currentPayIcon').innerText = icon;
+      document.getElementById('currentPayLabel').innerText = label;
+      document.getElementById('paymentDropdown').style.display = 'none';
+    }
+
+    // Note to Driver Logic
+    function openNoteModal() { document.getElementById('noteModal').style.display = 'flex'; }
+    function closeNoteModal() { document.getElementById('noteModal').style.display = 'none'; }
+
+    function sendNote() {
+      const note = document.getElementById('noteInput').value;
+      if (!note) return;
+      socket.emit('msg:to_driver', { rideId: activeRideId, message: note });
+      alert('Note delivered to your driver!');
+      closeNoteModal();
+    }
+
+    socket.on('msg:received_customer', ({ message }) => {
+      alert(`Driver sent you a message: ${message}`);
+    });
+
+    // Booking Dispatch
     function dispatchRide() {
       activeRideId = 'ride_' + Date.now();
-      const btn = document.getElementById('confirmBookBtn');
-      btn.innerText = 'Finding Nearby Driver...';
-      btn.style.background = '#eab308';
+      document.getElementById('confirmBookBtn').innerText = 'Finding Nearby Driver...';
+      document.getElementById('confirmBookBtn').style.background = '#eab308';
 
       socket.emit('ride:request', {
         rideId: activeRideId,
@@ -547,88 +521,11 @@
       });
     }
 
-    // Driver Acceptance Event
     socket.on('ride:assigned', (data) => {
       assignedDriverSocketId = data.driverSocketId;
-      document.getElementById('activeMatchAlert').style.display = 'block';
       document.getElementById('confirmBookBtn').style.display = 'none';
-      document.getElementById('driverStatus').innerText = `${data.name || 'Ramesh Rao'} (${data.vehiclePlate || 'TS 03 EQ 4812'})`;
+      document.getElementById('activeMatchAlert').style.display = 'block';
     });
-
-    // Telemetry vehicle movement on map
-    socket.on('ride:telemetry_update', (data) => {
-      if (data.rideId === activeRideId) {
-        if (!carMarker && map) {
-          carMarker = L.circleMarker([data.lat, data.lng], { radius: 9, color: '#ffffff', fillColor: '#38bdf8', fillOpacity: 1 }).addTo(map);
-        } else if (carMarker) {
-          carMarker.setLatLng([data.lat, data.lng]);
-        }
-      }
-    });
-
-    // Ride Completed
-    socket.on('ride:completed_client', () => {
-      alert('Ride completed! Thank you for choosing Velox.');
-      location.reload();
-    });
-
-    // VoIP WebRTC Voice Calling
-    async function toggleVoipCall() { isCalling ? endCall() : await startCall(); }
-
-    async function startCall() {
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        peerConnection = new RTCPeerConnection(rtcConfig);
-        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-        peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
-        peerConnection.onicecandidate = e => {
-          if (e.candidate && assignedDriverSocketId) {
-            socket.emit('call:ice_candidate', { targetSocketId: assignedDriverSocketId, candidate: e.candidate });
-          }
-        };
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('call:initiate', { targetSocketId: assignedDriverSocketId, offer });
-        isCalling = true;
-      } catch (err) {
-        alert('Microphone permission required for VoIP calls.');
-      }
-    }
-
-    socket.on('call:accepted', async ({ answer }) => {
-      if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on('call:incoming', async ({ fromSocketId, offer }) => {
-      assignedDriverSocketId = fromSocketId;
-      if (confirm('Incoming call from Driver. Accept?')) {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        peerConnection = new RTCPeerConnection(rtcConfig);
-        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-        peerConnection.ontrack = e => document.getElementById('remoteAudio').srcObject = e.streams[0];
-        peerConnection.onicecandidate = e => {
-          if (e.candidate) socket.emit('call:ice_candidate', { targetSocketId: fromSocketId, candidate: e.candidate });
-        };
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('call:accept', { targetSocketId: fromSocketId, answer });
-        isCalling = true;
-      }
-    });
-
-    socket.on('call:ice_candidate', async ({ candidate }) => {
-      if (peerConnection && candidate) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-
-    socket.on('call:ended', () => endCall(false));
-
-    function endCall(notify = true) {
-      if (notify && assignedDriverSocketId) socket.emit('call:end', { targetSocketId: assignedDriverSocketId });
-      if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-      if (peerConnection) { peerConnection.close(); peerConnection = null; }
-      isCalling = false;
-    }
   </script>
 </body>
 </html>

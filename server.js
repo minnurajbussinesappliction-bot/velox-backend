@@ -64,9 +64,25 @@ app.get('/api/rides/history', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+  // Driver goes online
   socket.on('driver:online', (driverData) => {
-    onlineDrivers.set(driverData.driverId, { ...driverData, socketId: socket.id, status: 'AVAILABLE' });
+    onlineDrivers.set(driverData.driverId, { 
+      ...driverData, 
+      socketId: socket.id, 
+      status: 'AVAILABLE' 
+    });
   });
+
+  // Relay note/message from passenger to driver
+  socket.on('msg:to_driver', ({ rideId, message }) => {
+    io.emit('msg:received_driver', { rideId, message });
+  });
+
+  // Relay note/message from driver to customer
+  socket.on('msg:to_customer', ({ rideId, message }) => {
+    io.emit('msg:received_customer', { rideId, message });
+  });
+});
 
   socket.on('ride:request', (payload) => {
     const rideId = `ride_${Date.now()}`;
